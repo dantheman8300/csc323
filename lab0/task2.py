@@ -1,4 +1,6 @@
 from base64 import b64encode, b64decode
+from time import time
+import math 
 
 STANDARD_FREQUENCIES = {
   'e': 0.12702,
@@ -49,6 +51,194 @@ def xor (plain: str, key: str) -> str:
 
   return xorResHex
 
+def singleByteXor ():
+  startTime = time()
+  btxt = open('Lab0.TaskII.B.txt', 'r').read().split('\n')
+  btxt.pop()
+
+  amount = 1000
+
+  allXorResults = []
+  highestScore = {'score': -1, 'line': 0, 'xor': 0}
+
+  for i in range(0, amount):
+    cipher = btxt[i]
+    # allXorResults.append(getAllXorResults(cipher))
+    cipherXorResults = getAllXorResults(cipher)
+    for j in range(0, len(cipherXorResults)):
+      result = cipherXorResults[j]
+      charFreq = calculateCharacterFrequency(result)
+      freqScore = compareCharacterFrequencies(charFreq, STANDARD_FREQUENCIES)
+      if (freqScore < highestScore['score'] or highestScore['score'] == -1):
+        highestScore = {'score': freqScore, 'line': i + 1, 'xor': j}
+        # print potential text
+        print("score: {}".format(highestScore))
+        print("\t\tPotential Text: {}".format(hexToString(result)))
+
+  # for (i, cipher) in enumerate(btxt[:amount]):
+  #   # print("Cipher {}:".format(i))
+  #   cipherXorResults = allXorResults[i]
+  #   for (j, result) in enumerate(cipherXorResults):
+  #     charFreq = calculateCharacterFrequency(result)
+  #     freqScore = compareCharacterFrequencies(charFreq, STANDARD_FREQUENCIES)
+  #     # print("\tResult {}.{}:".format(i, j))
+  #     # print("\t\tScore: {}".format(freqScore))
+  #     if (freqScore < highestScore['score'] or highestScore['score'] == -1):
+  #       highestScore = {'score': freqScore, 'line': i, 'xor': j}
+  #       # print("\t\tHighest Score: {}".format(highestScore))
+  #       # print("\t\tResult: {}".format(result))
+  #       # print("\t\tCharacter Frequency: {}".format(charFreq))
+  #       #print potential text
+  #       print("\t\tPotential Text: {}".format(hexToString(result)))
+
+  
+  endTime = time()
+
+  print("=========================================")
+  print("Time taken: {}".format(endTime - startTime))
+  print("highestScore: {}".format(highestScore))
+  # print("Result: {}".format(hexToString(allXorResults[highestScore['line']][highestScore['xor']])))
+
+
+def multiByteXor():
+  startTime = time()
+  intervalTime = time()
+  ctxt = open('Lab0.TaskII.C.txt', 'r').read().split('\n')
+  ctxt.pop()
+  ctxt = ''.join(ctxt)
+  ctxt = hexToString(base64ToHex(ctxt))
+
+  keyA = 'abcdefghijklmnopqrstuvwxyz'
+
+  biggestDifferencePercentage = 0
+  biggestDifferenceKeyLength = 0
+
+  # xorResHex = xor(ctxt, keyA)
+  # # xorResString = hexToString(xorResHex)
+  # freq = calculateCharacterFrequency(xorResHex)
+  # print("freq: {}".format(freq))
+
+  fileAverage = open("outputAverage.txt", "w")
+  fileEach = open("outputEach.txt", "w")
+
+  for i in range(1, len(keyA) + 1): # key length
+    key = keyA[:i]
+    strings = []
+    for j in range(0, i):
+      strings.append(ctxt[j::i])
+
+    differencePercentageSum = 0
+
+    for j in range(0, i):
+      freq = calculateCharacterFrequency(xor(strings[j], key[j]), False)
+      differencePercentageSum += (max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100
+      # print("freq: {}".format(freq))
+      # print("+++++++++++++++++++++++++++++")
+      # print("key length: {}".format(i))
+      # print("largest frequency value: {}".format(max(freq.values())))
+      # print("Smallest frequency value: {}".format(min(freq.values())))
+      # print("biggest difference: {}".format(max(freq.values()) - min(freq.values())))
+      # print("biggest difference percentage: {}".format((max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100))
+      # print("average freq: {}".format(sum(freq.values()) / len(freq)))
+      # print("+++++++++++++++++++++++++++++")
+      # file.write("+++++++++++++++++++++++++++++\n")
+      # file.write("key length: {}\n".format(i))
+      # file.write("largest frequency value: {}\n".format(max(freq.values())))
+      # file.write("Smallest frequency value: {}\n".format(min(freq.values())))
+      # file.write("biggest difference: {}\n".format(max(freq.values()) - min(freq.values())))
+      fileEach.write("{}:\t{} {:.2f}\n".format(i, "=" * math.floor(((max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100)), (max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100))
+      # file.write("average freq: {}\n".format(sum(freq.values()) / len(freq)))
+      # file.write("+++++++++++++++++++++++++++++\n")
+
+    averageDifferencePercentage = differencePercentageSum / i
+    fileAverage.write("{}:\t{} {:.2f}\n".format(i, "=" * math.floor(averageDifferencePercentage), averageDifferencePercentage))
+
+    if (averageDifferencePercentage > biggestDifferencePercentage):
+      biggestDifferencePercentage = averageDifferencePercentage
+      biggestDifferenceKeyLength = i
+
+
+  print("biggestDifferencePercentage: {}".format(biggestDifferencePercentage))
+  print("biggestDifferenceKeyLength: {}".format(biggestDifferenceKeyLength))
+
+  fileAverage.close()
+  fileEach.close()
+
+  numbers = []
+  numbers.extend(range(0, 256))
+  possibleKeyVals = []
+  for i in range(0, biggestDifferenceKeyLength):
+    possibleKeyVals.append(numbers.copy())
+  # print("possibleKeyVals: {}".format(possibleKeyVals))
+
+  for j in range(0, len(ctxt)):
+    print("char: {}".format(ctxt[j]))
+    print("j: {}".format(j))
+    i = 0
+    while(i < len(possibleKeyVals[j % biggestDifferenceKeyLength])):
+      # print("i: {}".format(i))
+      # print("possibleKeyVals[j][i]: {}".format(possibleKeyVals[j][i]))
+      xorRes = int(xor(ctxt[j], chr(possibleKeyVals[j % biggestDifferenceKeyLength][i])), 16)
+      # print("xorRes: {}".format(xorRes))
+      if (xorRes < 0 or xorRes > 126):
+        print("removing: {}".format(possibleKeyVals[j % biggestDifferenceKeyLength][i]))
+        possibleKeyVals[j % biggestDifferenceKeyLength].pop(i)
+        i -= 1
+      i += 1
+
+  print("possibleKeyVals: {}".format(possibleKeyVals))
+
+  key = [0] * biggestDifferenceKeyLength
+  currIndex = 0
+
+  bestScore = {'score': -1, 'key': [], 'plaintext': ""}
+
+  
+  while (currIndex < biggestDifferenceKeyLength): 
+    for i in range(0, biggestDifferenceKeyLength):
+      if (key[i] not in possibleKeyVals[i]):
+        continue
+    # print("key: {}".format(key))
+    xorKey = ''.join([chr(x) for x in key])
+    # print("xorKey: {}".format(xorKey))
+    xorResHex = xor(ctxt, xorKey)
+    score = compareCharacterFrequencies(calculateCharacterFrequency(xorResHex), STANDARD_FREQUENCIES)
+    xorResString = hexToString(xorResHex)
+    # print("score: {}".format(score))
+    # print alive text every 5 minutes
+    if (time() - intervalTime > 60):
+      intervalTime = time()
+      print("==================================================================================")
+      print("Still ticking...")
+      print("elapsed time: {}".format((time() - startTime) / 60))
+      print("key: {}".format(key))
+      print("==================================================================================")
+    if (score < bestScore['score'] or bestScore['score'] == -1):
+      bestScore = {'score': score, 'key': key.copy(), 'plaintext': xorResString}
+      # print("bestScore: {}".format(bestScore))
+      # print potential text
+      print("==================================================================================")
+      print("elapsed time: {}".format(time() - startTime))
+      print("score: {}, key: {}".format(score, key))
+      print("\t\tPotential Text: {}".format(xorResString))
+      print("==================================================================================")
+
+    if (key[currIndex] == 255):
+      while (currIndex < i and key[currIndex] == 255):
+        key[currIndex] = 0
+        currIndex += 1
+      if (currIndex == i):
+        break
+      key[currIndex] += 1
+      currIndex = 0
+    else:
+      key[currIndex] += 1
+
+  endTime = time()
+  
+  print("bestScore: {}".format(bestScore))
+  print("Time taken: {}".format(endTime - startTime))
+
 def compareCharacterFrequencies (freq1: dict, freq2: dict) -> float:
   total = 0
 
@@ -66,29 +256,34 @@ def compareCharacterFrequencies (freq1: dict, freq2: dict) -> float:
 
 # Calculates the frequency of each character in a string
 # the string is hex encoded
-def calculateCharacterFrequency (string: str) -> dict:
+def calculateCharacterFrequency (string: str, onlyAlpha = True) -> dict:
+  characterCounts = {}
   characterFrequency = {}
 
   for i in range(0, len(string), 2):
     charVal = int(string[i:i+2], 16)
 
-    # ignore non letters
-    if (charVal < 65 or (charVal > 90 and charVal < 97) or charVal > 122):
-      continue
+    if (onlyAlpha):
+      # ignore non letters
+      if (charVal < 65 or (charVal > 90 and charVal < 97) or charVal > 122):
+        continue
 
-    # Make everything letter lowercase
-    if (charVal >= 65 and charVal <= 90):
-      charVal += 32
+    if (onlyAlpha):
+      # Make everything letter lowercase
+      if (charVal >= 65 and charVal <= 90):
+        charVal += 32
 
-    char = chr(charVal)
+    if (onlyAlpha):
+      char = chr(charVal)
+    else:
+      char = charVal
 
     if char in characterFrequency:
-      characterFrequency[char] += 1
+      characterCounts[char] += 1
+      characterFrequency[char] = characterCounts[char] / (len(string) * 2)
     else:
-      characterFrequency[char] = 1
-
-  for key in characterFrequency:
-    characterFrequency[key] = characterFrequency[key] / (len(string) * 2)
+      characterCounts[char] = 1
+      characterFrequency[char] = 1 / (len(string) * 2)
 
   return characterFrequency
 
@@ -135,53 +330,9 @@ print(xor('cat', 'a'))
 
 print("=========================================")
 
-btxt = open('Lab0.TaskII.B.txt', 'r').read().split('\n')
-btxt.pop()
 
-amount = 1000
+# singleByteXor()
 
-allXorResults = []
-highestScore = {'score': -1, 'line': 0, 'xor': 0}
-
-for cipher in btxt[:amount]:
-  allXorResults.append(getAllXorResults(cipher))
-
-for (i, cipher) in enumerate(btxt[:amount]):
-  # print("Cipher {}:".format(i))
-  cipherXorResults = allXorResults[i]
-  for (j, result) in enumerate(cipherXorResults):
-    charFreq = calculateCharacterFrequency(result)
-    freqScore = compareCharacterFrequencies(charFreq, STANDARD_FREQUENCIES)
-    # print("\tResult {}.{}:".format(i, j))
-    # print("\t\tScore: {}".format(freqScore))
-    if (freqScore < highestScore['score'] or highestScore['score'] == -1):
-      highestScore = {'score': freqScore, 'line': i, 'xor': j}
-      # print("\t\tHighest Score: {}".format(highestScore))
-      # print("\t\tResult: {}".format(result))
-      # print("\t\tCharacter Frequency: {}".format(charFreq))
-
-print("=========================================")
-print("highestScore: {}".format(highestScore))
-print("Result: {}".format(hexToString(allXorResults[highestScore['line']][highestScore['xor']])))
-
-
-# print(btxt[0])
-
-# print(getAllXorResults(btxt[0]))
-
-# for (i, result) in enumerate(getAllXorResults(btxt[0])):
-#   print("Result {}:".format(i))
-#   print(calculateCharacterFrequency(result))
-#   print(compareCharacterFrequencies(calculateCharacterFrequency(result), STANDARD_FREQUENCIES))
-
-
-# print("6161616161")
-
-# print(getAllXorResults("6161616161"))
-
-# for (i, result) in enumerate(getAllXorResults("6161616161")):
-#   print("Result {}:".format(i))
-#   print(calculateCharacterFrequency(result))
-#   print(compareCharacterFrequencies(calculateCharacterFrequency(result), STANDARD_FREQUENCIES))
+multiByteXor()
 
 
