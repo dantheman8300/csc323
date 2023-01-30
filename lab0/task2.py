@@ -1,6 +1,7 @@
 from base64 import b64encode, b64decode
 from time import time
 import math 
+import matplotlib.pyplot as plt
 
 STANDARD_FREQUENCIES = {
   'e': 0.12702,
@@ -118,8 +119,10 @@ def multiByteXor():
   # freq = calculateCharacterFrequency(xorResHex)
   # print("freq: {}".format(freq))
 
-  fileAverage = open("outputAverage.txt", "w")
-  fileEach = open("outputEach.txt", "w")
+  # fileAverage = open("outputAverage.txt", "w")
+  # fileEach = open("outputEach.txt", "w")
+
+  averageDifferencePercentages = []
 
   for i in range(1, len(keyA) + 1): # key length
     key = keyA[:i]
@@ -132,10 +135,11 @@ def multiByteXor():
     for j in range(0, i):
       freq = calculateCharacterFrequency(xor(strings[j], key[j]), False)
       differencePercentageSum += (max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100
-      fileEach.write("{}:\t{} {:.2f}\n".format(i, "=" * math.floor(((max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100)), (max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100))
+      # fileEach.write("{}:\t{} {:.2f}\n".format(i, "=" * math.floor(((max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100)), (max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100))
 
     averageDifferencePercentage = differencePercentageSum / i
-    fileAverage.write("{}:\t{} {:.2f}\n".format(i, "=" * math.floor(averageDifferencePercentage), averageDifferencePercentage))
+    # fileAverage.write("{}:\t{} {:.2f}\n".format(i, "=" * math.floor(averageDifferencePercentage), averageDifferencePercentage))
+    averageDifferencePercentages.append(averageDifferencePercentage)
 
     if (averageDifferencePercentage > biggestDifferencePercentage):
       biggestDifferencePercentage = averageDifferencePercentage
@@ -145,8 +149,15 @@ def multiByteXor():
   print("biggestDifferencePercentage: {}".format(biggestDifferencePercentage))
   print("biggestDifferenceKeyLength: {}".format(biggestDifferenceKeyLength))
 
-  fileAverage.close()
-  fileEach.close()
+  plt.plot(range(1, len(keyA) + 1), averageDifferencePercentages)
+  plt.xlabel("Key Length")
+  plt.ylabel("Average Difference Percentage")
+  plt.savefig("C.averageDifferencePercentages.png")
+  plt.show()
+  plt.clf()
+
+  # fileAverage.close()
+  # fileEach.close()
 
   numbers = []
   numbers.extend(range(0, 256))
@@ -184,74 +195,60 @@ def multiByteXor():
   # print("xorKey: {}".format(xorKey))
   print("Result: {}".format(hexToString(xor(ctxt, xorKey))))
 
+def vigenereCipher(): 
+  dtxt = open('Lab0.TaskII.D.txt', 'r').read()
+  print("dtxt: {}".format(dtxt))
 
-  # for j in range(0, len(ctxt)):
-  #   print("char: {}".format(ctxt[j]))
-  #   print("j: {}".format(j))
-  #   i = 0
-  #   while(i < len(possibleKeyVals[j % biggestDifferenceKeyLength])):
-  #     # print("i: {}".format(i))
-  #     # print("possibleKeyVals[j][i]: {}".format(possibleKeyVals[j][i]))
-  #     xorRes = int(xor(ctxt[j], chr(possibleKeyVals[j % biggestDifferenceKeyLength][i])), 16)
-  #     # print("xorRes: {}".format(xorRes))
-  #     if (xorRes < 0 or xorRes > 126):
-  #       print("removing: {}".format(possibleKeyVals[j % biggestDifferenceKeyLength][i]))
-  #       possibleKeyVals[j % biggestDifferenceKeyLength].pop(i)
-  #       i -= 1
-  #     i += 1
+  keyA = ''.join([chr(x) for x in range(150)])
 
-  # print("possibleKeyVals: {}".format(possibleKeyVals))
+  biggestDifferencePercentage = 0
+  biggestDifferenceKeyLength = 0
 
-  # key = [0] * biggestDifferenceKeyLength
-  # currIndex = 0
+  # xorResHex = xor(ctxt, keyA)
+  # # xorResString = hexToString(xorResHex)
+  # freq = calculateCharacterFrequency(xorResHex)
+  # print("freq: {}".format(freq))
 
-  # bestScore = {'score': -1, 'key': [], 'plaintext': ""}
+  # fileAverage = open("D.outputAverage.txt", "w")
+  # fileEach = open("D.outputEach.txt", "w")
 
-  
-  # while (currIndex < biggestDifferenceKeyLength): 
-  #   for i in range(0, biggestDifferenceKeyLength):
-  #     if (key[i] not in possibleKeyVals[i]):
-  #       continue
-  #   # print("key: {}".format(key))
-  #   xorKey = ''.join([chr(x) for x in key])
-  #   # print("xorKey: {}".format(xorKey))
-  #   xorResHex = xor(ctxt, xorKey)
-  #   score = compareCharacterFrequencies(calculateCharacterFrequency(xorResHex), STANDARD_FREQUENCIES)
-  #   xorResString = hexToString(xorResHex)
-  #   # print("score: {}".format(score))
-  #   # print alive text every 5 minutes
-  #   if (time() - intervalTime > 60):
-  #     intervalTime = time()
-  #     print("==================================================================================")
-  #     print("Still ticking...")
-  #     print("elapsed time: {}".format((time() - startTime) / 60))
-  #     print("key: {}".format(key))
-  #     print("==================================================================================")
-  #   if (score < bestScore['score'] or bestScore['score'] == -1):
-  #     bestScore = {'score': score, 'key': key.copy(), 'plaintext': xorResString}
-  #     # print("bestScore: {}".format(bestScore))
-  #     # print potential text
-  #     print("==================================================================================")
-  #     print("elapsed time: {}".format(time() - startTime))
-  #     print("score: {}, key: {}".format(score, key))
-  #     print("\t\tPotential Text: {}".format(xorResString))
-  #     print("==================================================================================")
+  differencePercentagesAverages = []
 
-  #   if (key[currIndex] == 255):
-  #     while (currIndex < i and key[currIndex] == 255):
-  #       key[currIndex] = 0
-  #       currIndex += 1
-  #     if (currIndex == i):
-  #       break
-  #     key[currIndex] += 1
-  #     currIndex = 0
-  #   else:
-  #     key[currIndex] += 1
+  for i in range(1, len(keyA) + 1): # key length
+    key = keyA[:i]
+    strings = []
+    for j in range(0, i):
+      strings.append(dtxt[j::i])
 
-  # endTime = time()
-  
-  # print("bestScore: {}".format(bestScore))
-  # print("Time taken: {}".format(endTime - startTime))
+    differencePercentageSum = 0
+
+    for j in range(0, i):
+      freq = calculateCharacterFrequency(xor(strings[j], key[j]), False)
+      differencePercentageSum += (max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100
+      # fileEach.write("{}:\t{} {:.2f}\n".format(i, "=" * math.floor(((max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100)), (max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100))
+
+    averageDifferencePercentage = differencePercentageSum / i
+    # fileAverage.write("{}:\t{} {:.2f}\n".format(i, "=" * math.floor(averageDifferencePercentage), averageDifferencePercentage))
+    differencePercentagesAverages.append(averageDifferencePercentage)
+
+    if (averageDifferencePercentage > biggestDifferencePercentage):
+      biggestDifferencePercentage = averageDifferencePercentage
+      biggestDifferenceKeyLength = i
+
+
+  print("biggestDifferencePercentage: {}".format(biggestDifferencePercentage))
+  print("biggestDifferenceKeyLength: {}".format(biggestDifferenceKeyLength))
+
+  plt.plot(range(1, len(differencePercentagesAverages) + 1), differencePercentagesAverages)
+  plt.xlabel("Key Length")
+  plt.ylabel("Average Difference Percentage")
+  plt.savefig("D.averageDifference.png")
+  plt.show()
+  plt.clf()
+
+
+  # fileAverage.close()
+  # fileEach.close()
 
 def compareCharacterFrequencies (freq1: dict, freq2: dict) -> float:
   total = 0
@@ -347,6 +344,8 @@ print("=========================================")
 
 # singleByteXor()
 
-multiByteXor()
+# multiByteXor()
+
+vigenereCipher()
 
 
