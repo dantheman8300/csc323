@@ -239,7 +239,7 @@ def vigenereCipher():
   dtxt = open('Lab0.TaskII.D.txt', 'r').read()
   print("dtxt: {}".format(dtxt))
 
-  keyA = ''.join([chr(x) for x in range(min(255, len(dtxt)))])
+  keyA = ''.join([chr(x) for x in range(len(dtxt))])
 
   biggestDifferencePercentage = 0
   biggestDifferenceKeyLength = 0
