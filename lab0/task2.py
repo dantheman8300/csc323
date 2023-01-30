@@ -32,6 +32,46 @@ STANDARD_FREQUENCIES = {
   'z': 0.00074
 }
 
+def vigenereCipherEncrypt(plainText: str, key: str):
+  plainText = plainText.lower()
+  key = key.lower()
+  cipherText = ""
+  for i in range(0, len(plainText)):
+    plainChar = plainText[i]
+    keyChar = key[i % len(key)]
+    keyOffset = ord(keyChar) - ord('a')
+    cipherVal = ord(plainChar) + keyOffset
+    if (cipherVal > ord('z')):
+      cipherVal -= 26
+    cipherChar = chr(cipherVal)
+    cipherText += cipherChar
+    # print("plainChar : {}".format(plainChar))
+    # print("keyChar : {}".format(keyChar))
+    # print("keyChar - a : {}".format(ord(keyChar) - ord('a')))
+    # print("cipherChar : {}".format(cipherChar))
+    # print("=========================================")
+  return cipherText
+
+def vigenereCipherDecrypt(cipherText: str, key: str):
+  cipherText = cipherText.lower()
+  key = key.lower()
+  plainText = ""
+  for i in range(0, len(cipherText)):
+    cipherChar = cipherText[i]
+    keyChar = key[i % len(key)]
+    keyOffset = ord(keyChar) - ord('a')
+    plainVal = ord(cipherChar) - keyOffset
+    if (plainVal < ord('a')):
+      plainVal += 26
+    plainChar = chr(plainVal)
+    plainText += plainChar
+    # print("cipherChar : {}".format(cipherChar))
+    # print("keyChar : {}".format(keyChar))
+    # print("keyChar - a : {}".format(ord(keyChar) - ord('a')))
+    # print("plainChar : {}".format(plainChar))
+    # print("=========================================")
+  return plainText
+
 
 
 def xor (plain: str, key: str) -> str: 
@@ -199,7 +239,7 @@ def vigenereCipher():
   dtxt = open('Lab0.TaskII.D.txt', 'r').read()
   print("dtxt: {}".format(dtxt))
 
-  keyA = ''.join([chr(x) for x in range(150)])
+  keyA = ''.join([chr(x) for x in range(min(255, len(dtxt)))])
 
   biggestDifferencePercentage = 0
   biggestDifferenceKeyLength = 0
@@ -246,9 +286,42 @@ def vigenereCipher():
   plt.show()
   plt.clf()
 
+  numbers = []
+  numbers.extend(range(0, 256))
+  possibleKeyVals = []
+  for i in range(0, biggestDifferenceKeyLength):
+    possibleKeyVals.append(numbers.copy())
+  # print("possibleKeyVals: {}".format(possibleKeyVals))
 
-  # fileAverage.close()
-  # fileEach.close()
+  bestKeyValues = []
+  bestKeyValueScores = []
+
+  # Split the ciphertext into 5 sets to analyze the frequency of each character
+  for i in range(biggestDifferenceKeyLength):
+    cipherSubText = dtxt[i::biggestDifferenceKeyLength]
+    # print("cipherSubText: {}".format(cipherSubText))
+    bestKeyValue = -1
+    bestKeyScore = -1
+    for i in range(97, 123):
+      # print("i: {}".format(i))
+      charFreq = calculateCharacterFrequency(stringToHex(vigenereCipherDecrypt(cipherSubText, chr(i))))
+      # print("charFreq: {}".format(charFreq))
+      charFreqScore = compareCharacterFrequencies(charFreq, STANDARD_FREQUENCIES)
+      # print("charFreqScore: {}".format(charFreqScore))
+      if (charFreqScore < bestKeyScore or bestKeyScore == -1):
+        bestKeyScore = charFreqScore
+        bestKeyValue = i
+    
+    bestKeyValues.append(bestKeyValue)
+    bestKeyValueScores.append(bestKeyScore)
+
+  print("bestKeyValues: {}".format(bestKeyValues))
+  print("bestKeyValueScores: {}".format(bestKeyValueScores))
+
+  xorKey = ''.join([chr(x) for x in bestKeyValues])
+  print("xorKey: {}".format(xorKey))
+  print("Result: {}".format(vigenereCipherDecrypt(dtxt, xorKey)))
+
 
 def compareCharacterFrequencies (freq1: dict, freq2: dict) -> float:
   total = 0
@@ -348,4 +421,7 @@ print("=========================================")
 
 vigenereCipher()
 
+# v = vigenereCipherEncrypt("HelloIamacactus", "cats")
+# print("v: {}".format(v))
+# print("v: {}".format(vigenereCipherDecrypt(v, "cats")))
 
