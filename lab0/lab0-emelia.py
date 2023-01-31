@@ -29,52 +29,52 @@ STANDARD_FREQUENCIES = {
   'z': 0.00074
 }
 
-
-
-# task 2 part A
-## Implement XOR 
-# if key < plaintext -> repeat key
-def xor(p, k) -> str:
-    result = ""
-    y = 0
-    if(len(k) < len(p)):
-        for x in p:
-            result += chr(ord(x) ^ ord(k[y % len(k)]))
-            y += 1
-    else:
-        for x in p:
-            result += chr(ord(x) ^ ord(k[y]))
-            y += 1
-    return str_2_hex(result)
-
-
-
 ## task 1 - decoders/encoders
 # encode strings to hexadecimal
 def str_2_hex(s) -> str:
     return s.encode(encoding='UTF-8', errors='strict').hex()
+
 # decode hexadecimal to strings
 def hex_2_str(h) -> str:
     result = ""
     for i in range(0, len(h) - 1, 2):
         result += chr(int(h[i:i+2], 16))
     return result
+
 # decode base64 to hexadecimal
 def base64_2_hex(b) -> str:
     return base64.b64decode(b).hex()
+
 # encode hexadecimal to base64
 def hex_2_base64(h) -> str:
     return base64.b64encode(bytes.fromhex(h)).decode()
 
 
+# task 2 part A
+## Implement XOR 
+def xor(p, k) -> str:
+    result = ""
+    keyInd = 0
+
+    # if key < plaintext -> repeat key
+    if(len(k) < len(p)):
+        for x in p:
+            result += chr(ord(x) ^ ord(k[keyInd % len(k)]))
+            keyInd += 1
+    else:
+        for x in p:
+            result += chr(ord(x) ^ ord(k[keyInd]))
+            keyInd += 1
+    return str_2_hex(result)
 
 
-## helper functions
+
 # checks if s is a letter
 def isLetter(s):
     if((s >= 'A' and s <= 'Z') or (s >= 'a' and s <= 'z') or s== ' '):
         return True
     return False
+
 
 # checks if s is an ascii printable character
 def isPrintable(s):
@@ -82,6 +82,13 @@ def isPrintable(s):
         return True
     return False
 
+# separate text into a list given an interval
+def grabIntervalStr(interval, txt):
+    n = [0] * interval
+    for i in range(interval):
+        x = slice(i,len(txt),interval)
+        n[i] = txt[x]
+    return n
 
 
 # count occurance of letters - frequency analysis
@@ -90,17 +97,19 @@ def freq_analysis(mes, mode = 0):
     for s in mes:
         if(mode == 1):
             if(isPrintable(s)):
-                # lower case
-                # s = s.lower()
                 if(s in chars):
                     chars[s] += 1
                 else :
                     chars[s] = 1
+        elif(mode == 2):
+            if(s in chars):
+                chars[s] += 1
+            else :
+                chars[s] = 1
 
         # ignore non letters
         else:
             if(isLetter(s)):
-                # lower case
                 s = s.lower()
                 if(s in chars):
                     chars[s] += 1
@@ -109,9 +118,9 @@ def freq_analysis(mes, mode = 0):
 
     # calculate ratio of amt of each character
     for i in chars:
-        chars[i] = chars[i] / (len(mes) * 2) # * 2 ??
-
+        chars[i] = chars[i] / (len(mes) * 2)
     return chars
+
 
 # compare calculated frequencies to standard frequencies
 def scorer(chars, std):
@@ -132,8 +141,66 @@ def scorer(chars, std):
     return total
 
 
+# xor and score text in intervals against standard frequencies
+def scorer2(txt, key):
+    max = -1
+    length = -1
+    for size in range(len(key)):
+        k = key[0:size+1]
+        x = xor(txt, k)
+        xord = hex_2_str(x)
+        arrs= grabIntervalStr(len(key), xord)
+        
+        freqs = [0] * len(arrs)
+        ind = 0
+        for y in arrs:
+            freqs[ind] = freq_analysis(y, 1)
+            ind += 1
 
-# task 2 part B
+        for amt in freqs:
+            min = 1000
+            most = -1
+            for num in amt:
+                if(amt[num] < min):
+                    min = amt[num]
+                elif(amt[num] > most):
+                    most = amt[num]
+        
+        if(abs(most - min) > max):
+            max = abs(most - min)
+            length = len(k)
+    return length
+
+
+# decrypt text given a key
+def v_decrypt(txt, key):
+
+    result = ""
+    y = 0
+    if(len(key) < len(txt)):
+        for x in txt:
+            diff = abs(ord("A") - ord(key[y % len(key)]))
+            sum = abs(diff - ord(x))
+            if(sum < 65):
+                result += chr(sum + 26)
+            else:
+                result += chr(sum)
+            y += 1
+    else:
+        for x in txt:
+            diff = abs(ord("A") - ord(key[y]))
+            sum = abs(diff - ord(x))
+            if(sum < 65):
+                result += chr(sum + 26)
+            else:
+                result += chr(sum)
+            y += 1
+    return result
+
+
+
+
+# task 2 part B - single byte XOR
 def single_byte_XOR(cipher):
 
     # decode string
@@ -159,6 +226,9 @@ def single_byte_XOR(cipher):
     except:
         return None
 
+
+
+## CODE TO RUN SINGLE BYTE
 # f = open("csc323\lab0\Lab0_TaskII_B.txt", "r")
 # out = open("csc323\lab0\out.txt", "w")
 # cipher = f.readlines()
@@ -174,55 +244,16 @@ def single_byte_XOR(cipher):
 # f.close()
 
 
-def grabIntervalStr(interval, txt):
-    n = [0] * interval
-    for i in range(interval):
-        x = slice(i,len(txt),interval)
-        n[i] = txt[x]
-    return n
-
-
-def scorer2(txt):
-    key = "abcdefghijklmnopqrst"
-    max = -1
-    length = -1
-    good = ""
-    for size in range(len(key)):
-        k = key[0:size+1]
-        x = xor(txt, k)
-        xord = hex_2_str(x)
-        arrs= grabIntervalStr(len(key), xord)
-        
-        freqs = [0] * len(arrs)
-        ind = 0
-        for y in arrs:
-            freqs[ind] = freq_analysis(y, 1)
-            ind += 1
-
-
-        for amt in freqs:
-            min = 1000
-            most = -1
-            for num in amt:
-                if(amt[num] < min):
-                    min = amt[num]
-                elif(amt[num] > most):
-                    most = amt[num]
-        
-        if(abs(most - min) > max):
-            max = abs(most - min)
-            length = len(k)
-    return length
-
 
 # task 2 part C
 def multi_byte_XOR(cipher, out):
 
     # decode from base 64 -> hex -> str
     txt = hex_2_str(base64_2_hex(cipher))
-    length = scorer2(txt)
+    key = "abcdefghijklmnopqrst"
+    length = scorer2(txt, key)
     arr = grabIntervalStr(length, txt)
-    best = [0, 0, 0, 0, 0]
+    best = [0] * length
     ind = 0
     for s in arr:
         currentScore = 10000
@@ -245,21 +276,67 @@ def multi_byte_XOR(cipher, out):
 
     x = xor(txt, key)
     result = hex_2_str(x)
-    # print(result)
+
+    # try to write result to file
     try:
         out.write(result)
     except:
         print("sad")
 
+
+## CODE TO RUN MULTI BYTE
 # f = open("csc323\lab0\Lab0_TaskII_C.txt", "r")
 # out = open("csc323\lab0\out2.txt", "w")
 # cipher = f.read()
 # multi_byte_XOR(cipher, out)
 
 
+
 # task 2 part D
-def vigenere_cipher():
-    return 0
+def vigenere_cipher(cipher, out):
+
+    # arbitrary key to find optimal length
+    key = "abcdefghijklmnopqrstuvwxyz"
+    length = scorer2(cipher, key)
+    arr = grabIntervalStr(length, cipher)
+    
+    best = [0] * length
+    ind = 0
+
+    #find the best key
+    for s in arr:
+        currentScore = 10000
+        value = 0
+        for i in range(65, 90):
+            decrypt = v_decrypt(s, chr(i))
+            freq = freq_analysis(decrypt)
+            score = scorer(freq, STANDARD_FREQUENCIES)
+
+            if(score < currentScore):
+                currentScore = score
+                value = i
+        best[ind] = chr(value)
+        ind += 1
+ 
+    # use the best key to decrypt cipher
+    key = ""
+    for i in best:
+        key += i
+    result = v_decrypt(cipher, key)
+
+
+    # try to write result to file
+    try:
+        out.write(result)
+    except:
+        print("sad")
+
+
+## CODE TO RUN VIGENERE CIPHER
+f = open("csc323\lab0\Lab0_TaskII_D.txt", "r")
+out = open("csc323\lab0\out3.txt", "w")
+cipher = f.read()
+vigenere_cipher(cipher, out)
 
 
 
