@@ -301,7 +301,7 @@ def vigenereCipher():
     bestKeyValues.append(bestKeyValue)
     bestKeyValueScores.append(bestKeyScore)
 
-  print("bestKeyValues: \"{}\"".format(bestKeyValues))
+  # print("bestKeyValues: \"{}\"".format(bestKeyValues))
   # print("bestKeyValueScores: {}".format(bestKeyValueScores))
   xorKey = ''.join([chr(x) for x in bestKeyValues])
   print("xorKey: \"{}\"".format(xorKey))
