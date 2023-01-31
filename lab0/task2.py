@@ -1,7 +1,7 @@
 from base64 import b64encode, b64decode
-from time import time
-import math 
+from time import sleep 
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 STANDARD_FREQUENCIES = {
   'e': 0.12702,
@@ -32,6 +32,9 @@ STANDARD_FREQUENCIES = {
   'z': 0.00074
 }
 
+#===============================================================================
+# Vigenere cipher helpers
+#===============================================================================
 def vigenereCipherEncrypt(plainText: str, key: str):
   plainText = plainText.lower()
   key = key.lower()
@@ -45,11 +48,6 @@ def vigenereCipherEncrypt(plainText: str, key: str):
       cipherVal -= 26
     cipherChar = chr(cipherVal)
     cipherText += cipherChar
-    # print("plainChar : {}".format(plainChar))
-    # print("keyChar : {}".format(keyChar))
-    # print("keyChar - a : {}".format(ord(keyChar) - ord('a')))
-    # print("cipherChar : {}".format(cipherChar))
-    # print("=========================================")
   return cipherText
 
 def vigenereCipherDecrypt(cipherText: str, key: str):
@@ -65,85 +63,80 @@ def vigenereCipherDecrypt(cipherText: str, key: str):
       plainVal += 26
     plainChar = chr(plainVal)
     plainText += plainChar
-    # print("cipherChar : {}".format(cipherChar))
-    # print("keyChar : {}".format(keyChar))
-    # print("keyChar - a : {}".format(ord(keyChar) - ord('a')))
-    # print("plainChar : {}".format(plainChar))
-    # print("=========================================")
   return plainText
 
+#===============================================================================
 
 
+# Take in an ASCII encode string and key, and returns the XOR result in hex
+# If the key is shorter than the plain text, it will be repeated
 def xor (plain: str, key: str) -> str: 
-
   xorResHex = ""
-
   for i in range (0, len(plain)):
     plainChar = plain[i]
     keyChar = key[i % len(key)]
     xorCharInHex = str(hex(ord(plainChar) ^ ord(keyChar))).split('0x')[1].zfill(2)
-
-    # print("plainChar : {}".format(plainChar))
-    # print("keyChar : {}".format(keyChar))
-    # print("xorCharInHex : {}".format(xorCharInHex))
     xorResHex += xorCharInHex
-
-  # xorResString = hexToString(xorResHex)
-
   return xorResHex
 
+#===============================================================================
+# Single byte XOR
+#
+#   Reads a list of 1000 hex encoded strings, where one of them is an english
+#   plaintext that has been XORed with a single character. The program will find
+#   the plaintext and output the plaintext, the ciphertext, and the xor key. 
+# 
+#   Note: The other 999 ciphertexts are random strings of hex encoded characters
+#===============================================================================
+
 def singleByteXor ():
-  startTime = time()
+
+  print("---Single Byte XOR---\n")
+  sleep(0.5)
+
+  # Read and parse the file
   btxt = open('Lab0.TaskII.B.txt', 'r').read().split('\n')
   btxt.pop()
 
-  amount = 1000
+  # Score tracker
+  bestScore = -1
+  ciphertext = ""
+  xorKey = ""
+  plaintext = ""
 
-  allXorResults = []
-  highestScore = {'score': -1, 'line': 0, 'xor': 0}
-
-  for i in range(0, amount):
-    cipher = btxt[i]
-    # allXorResults.append(getAllXorResults(cipher))
-    cipherXorResults = getAllXorResults(cipher)
-    for j in range(0, len(cipherXorResults)):
-      result = cipherXorResults[j]
-      charFreq = calculateCharacterFrequency(result)
+  # iterate through all ciphertexts, generate all posible plaintexts, and find
+  # the one with the frequency score closest to the standard english frequencies
+  for ciphertext in tqdm(btxt, "Cracking single byte XOR", leave=False):
+    cipherXorResults = getAllSingleByteXorResults(ciphertext)
+    for xorResult in cipherXorResults:
+      charFreq = calculateCharacterFrequency(xorResult)
       freqScore = compareCharacterFrequencies(charFreq, STANDARD_FREQUENCIES)
-      if (freqScore < highestScore['score'] or highestScore['score'] == -1):
-        highestScore = {'score': freqScore, 'line': i + 1, 'xor': j}
-        # print potential text
-        print("score: {}".format(highestScore))
-        print("\t\tPotential Text: {}".format(hexToString(result)))
-
-  # for (i, cipher) in enumerate(btxt[:amount]):
-  #   # print("Cipher {}:".format(i))
-  #   cipherXorResults = allXorResults[i]
-  #   for (j, result) in enumerate(cipherXorResults):
-  #     charFreq = calculateCharacterFrequency(result)
-  #     freqScore = compareCharacterFrequencies(charFreq, STANDARD_FREQUENCIES)
-  #     # print("\tResult {}.{}:".format(i, j))
-  #     # print("\t\tScore: {}".format(freqScore))
-  #     if (freqScore < highestScore['score'] or highestScore['score'] == -1):
-  #       highestScore = {'score': freqScore, 'line': i, 'xor': j}
-  #       # print("\t\tHighest Score: {}".format(highestScore))
-  #       # print("\t\tResult: {}".format(result))
-  #       # print("\t\tCharacter Frequency: {}".format(charFreq))
-  #       #print potential text
-  #       print("\t\tPotential Text: {}".format(hexToString(result)))
-
+      if (freqScore < bestScore or bestScore == -1):
+        bestScore = freqScore
+        plaintext = hexToString(xorResult)
+        xorKey = xorResult[0]
+        ciphertext = ciphertext
   
-  endTime = time()
+  print("\tScore: {}\n".format(bestScore))
+  print("\tXOR Key:  \"{}\"\n".format(xorKey))
+  print("\tPlaintext: \"{}\"\n".format(plaintext))
+  print("\tCiphertext:  \"{}\"\n".format(ciphertext))
 
-  print("=========================================")
-  print("Time taken: {}".format(endTime - startTime))
-  print("highestScore: {}".format(highestScore))
-  # print("Result: {}".format(hexToString(allXorResults[highestScore['line']][highestScore['xor']])))
-
+#===============================================================================
+#===============================================================================
+# Multi byte XOR
+#
+#   Takes a plaintext that has been XOR'd against a multi byte key of unknown 
+#   length. The program will find the key length, and then find the key. Once 
+#   the key is found, the program will decrypt the ciphertext and output the
+#   plaintext, the ciphertext, the key, and the key length.
+#===============================================================================
 
 def multiByteXor():
-  startTime = time()
-  intervalTime = time()
+
+  print("---Multi Byte XOR---\n")
+  sleep(1)
+
   ctxt = open('Lab0.TaskII.C.txt', 'r').read().split('\n')
   ctxt.pop()
   ctxt = ''.join(ctxt)
@@ -154,17 +147,11 @@ def multiByteXor():
   biggestDifferencePercentage = 0
   biggestDifferenceKeyLength = 0
 
-  # xorResHex = xor(ctxt, keyA)
-  # # xorResString = hexToString(xorResHex)
-  # freq = calculateCharacterFrequency(xorResHex)
-  # print("freq: {}".format(freq))
-
-  # fileAverage = open("outputAverage.txt", "w")
-  # fileEach = open("outputEach.txt", "w")
-
   averageDifferencePercentages = []
 
-  for i in range(1, len(keyA) + 1): # key length
+  # Iterate through all possible key lengths and find the one with the highest
+  # average difference percentage
+  for i in range(1, len(keyA) + 1): 
     key = keyA[:i]
     strings = []
     for j in range(0, i):
@@ -173,21 +160,18 @@ def multiByteXor():
     differencePercentageSum = 0
 
     for j in range(0, i):
-      freq = calculateCharacterFrequency(xor(strings[j], key[j]), False)
-      differencePercentageSum += (max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100
-      # fileEach.write("{}:\t{} {:.2f}\n".format(i, "=" * math.floor(((max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100)), (max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100))
+      xorResult = xor(strings[j], key[j])
+      differencePercentageSum += getCharacterPercentDifference(xorResult)
 
     averageDifferencePercentage = differencePercentageSum / i
-    # fileAverage.write("{}:\t{} {:.2f}\n".format(i, "=" * math.floor(averageDifferencePercentage), averageDifferencePercentage))
     averageDifferencePercentages.append(averageDifferencePercentage)
 
     if (averageDifferencePercentage > biggestDifferencePercentage):
       biggestDifferencePercentage = averageDifferencePercentage
       biggestDifferenceKeyLength = i
 
-
-  print("biggestDifferencePercentage: {}".format(biggestDifferencePercentage))
-  print("biggestDifferenceKeyLength: {}".format(biggestDifferenceKeyLength))
+  print("\tPercent difference: {:.2f}%".format(biggestDifferencePercentage))
+  print("\tKey length: {}".format(biggestDifferenceKeyLength))
 
   plt.plot(range(1, len(keyA) + 1), averageDifferencePercentages)
   plt.xlabel("Key Length")
@@ -196,31 +180,27 @@ def multiByteXor():
   plt.show()
   plt.clf()
 
-  # fileAverage.close()
-  # fileEach.close()
 
+  # Generate a list of all possible key values for each set of ciphertext
   numbers = []
   numbers.extend(range(0, 256))
   possibleKeyVals = []
   for i in range(0, biggestDifferenceKeyLength):
     possibleKeyVals.append(numbers.copy())
-  # print("possibleKeyVals: {}".format(possibleKeyVals))
 
+  # score trackers
   bestKeyValues = []
   bestKeyValueScores = []
 
-  # Split the ciphertext into 5 sets to analyze the frequency of each character
+  # Split the ciphertext into 5 sets to analyze the character distribution of 
+  # each set. The key is the most common character in each set
   for i in range(biggestDifferenceKeyLength):
     cipherSubText = ctxt[i::biggestDifferenceKeyLength]
-    # print("cipherSubText: {}".format(cipherSubText))
     bestKeyValue = -1
     bestKeyScore = -1
     for i in range(256):
-      # print("i: {}".format(i))
       charFreq = calculateCharacterFrequency(xor(cipherSubText, chr(i)))
-      # print("charFreq: {}".format(charFreq))
       charFreqScore = compareCharacterFrequencies(charFreq, STANDARD_FREQUENCIES)
-      # print("charFreqScore: {}".format(charFreqScore))
       if (charFreqScore < bestKeyScore or bestKeyScore == -1):
         bestKeyScore = charFreqScore
         bestKeyValue = i
@@ -228,33 +208,43 @@ def multiByteXor():
     bestKeyValues.append(bestKeyValue)
     bestKeyValueScores.append(bestKeyScore)
 
-  print("bestKeyValues: {}".format(bestKeyValues))
-  print("bestKeyValueScores: {}".format(bestKeyValueScores))
-
   xorKey = ''.join([chr(x) for x in bestKeyValues])
-  # print("xorKey: {}".format(xorKey))
-  print("Result: {}".format(hexToString(xor(ctxt, xorKey))))
+  print("Key: \"{}\"".format(xorKey))
+  sleep(1)
+  # print("Key score: {}".format(bestKeyValueScores))
+  
+  plaintext = hexToString(xor(ctxt, xorKey))
+  print("Result: \"{}\"".format(plaintext))
+  sleep(1)
+
+#===============================================================================
+#===============================================================================
+# Vigenere Cipher
+#
+#   Take an ASCII encoded text that has been encrypted using the Vigenere Cipher
+#   and decrypt it. The program will find the key length, and then find the key.
+#   Once the key is found, the program will decrypt the ciphertext and output 
+#   the plaintext, the ciphertext, the key, and the key length.
+#=============================================================================== 
 
 def vigenereCipher(): 
+
+  print("---Vigenere Cipher---\n")
+  sleep(1)
+
   dtxt = open('Lab0.TaskII.D.txt', 'r').read()
   print("dtxt: {}".format(dtxt))
 
-  keyA = ''.join([chr(x) for x in range(len(dtxt))])
+  keyA = ''.join([chr(x) for x in range(20)]) # possible key values
 
+  # Trackers
   biggestDifferencePercentage = 0
   biggestDifferenceKeyLength = 0
-
-  # xorResHex = xor(ctxt, keyA)
-  # # xorResString = hexToString(xorResHex)
-  # freq = calculateCharacterFrequency(xorResHex)
-  # print("freq: {}".format(freq))
-
-  # fileAverage = open("D.outputAverage.txt", "w")
-  # fileEach = open("D.outputEach.txt", "w")
-
   differencePercentagesAverages = []
 
-  for i in range(1, len(keyA) + 1): # key length
+  # Iterate through all possible key lengths and find the one with the highest
+  # average difference percentage
+  for i in range(1, len(keyA) + 1):
     key = keyA[:i]
     strings = []
     for j in range(0, i):
@@ -263,12 +253,10 @@ def vigenereCipher():
     differencePercentageSum = 0
 
     for j in range(0, i):
-      freq = calculateCharacterFrequency(xor(strings[j], key[j]), False)
-      differencePercentageSum += (max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100
-      # fileEach.write("{}:\t{} {:.2f}\n".format(i, "=" * math.floor(((max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100)), (max(freq.values()) - min(freq.values())) / sum(freq.values()) * 100))
+      xorResult = xor(strings[j], key[j])
+      differencePercentageSum += getCharacterPercentDifference(xorResult)
 
     averageDifferencePercentage = differencePercentageSum / i
-    # fileAverage.write("{}:\t{} {:.2f}\n".format(i, "=" * math.floor(averageDifferencePercentage), averageDifferencePercentage))
     differencePercentagesAverages.append(averageDifferencePercentage)
 
     if (averageDifferencePercentage > biggestDifferencePercentage):
@@ -276,38 +264,36 @@ def vigenereCipher():
       biggestDifferenceKeyLength = i
 
 
-  print("biggestDifferencePercentage: {}".format(biggestDifferencePercentage))
-  print("biggestDifferenceKeyLength: {}".format(biggestDifferenceKeyLength))
+  print("\tPercent difference: {:.2f}%".format(biggestDifferencePercentage))
+  print("\tKey length: {}".format(biggestDifferenceKeyLength))
 
-  plt.plot(range(1, len(differencePercentagesAverages) + 1), differencePercentagesAverages)
+  plt.plot(range(1, len(keyA) + 1), differencePercentagesAverages)
   plt.xlabel("Key Length")
   plt.ylabel("Average Difference Percentage")
   plt.savefig("D.averageDifference.png")
   plt.show()
   plt.clf()
 
+  # Generate a list of all possible key values for each set of ciphertext
   numbers = []
   numbers.extend(range(0, 256))
   possibleKeyVals = []
   for i in range(0, biggestDifferenceKeyLength):
     possibleKeyVals.append(numbers.copy())
-  # print("possibleKeyVals: {}".format(possibleKeyVals))
 
+  # score trackers
   bestKeyValues = []
   bestKeyValueScores = []
 
-  # Split the ciphertext into 5 sets to analyze the frequency of each character
+  # Split the ciphertext into 5 sets to analyze the character distribution of 
+  # each set. The key is the most common character in each set  
   for i in range(biggestDifferenceKeyLength):
     cipherSubText = dtxt[i::biggestDifferenceKeyLength]
-    # print("cipherSubText: {}".format(cipherSubText))
     bestKeyValue = -1
     bestKeyScore = -1
     for i in range(97, 123):
-      # print("i: {}".format(i))
       charFreq = calculateCharacterFrequency(stringToHex(vigenereCipherDecrypt(cipherSubText, chr(i))))
-      # print("charFreq: {}".format(charFreq))
       charFreqScore = compareCharacterFrequencies(charFreq, STANDARD_FREQUENCIES)
-      # print("charFreqScore: {}".format(charFreqScore))
       if (charFreqScore < bestKeyScore or bestKeyScore == -1):
         bestKeyScore = charFreqScore
         bestKeyValue = i
@@ -315,13 +301,18 @@ def vigenereCipher():
     bestKeyValues.append(bestKeyValue)
     bestKeyValueScores.append(bestKeyScore)
 
-  print("bestKeyValues: {}".format(bestKeyValues))
-  print("bestKeyValueScores: {}".format(bestKeyValueScores))
-
+  print("bestKeyValues: \"{}\"".format(bestKeyValues))
+  # print("bestKeyValueScores: {}".format(bestKeyValueScores))
   xorKey = ''.join([chr(x) for x in bestKeyValues])
-  print("xorKey: {}".format(xorKey))
-  print("Result: {}".format(vigenereCipherDecrypt(dtxt, xorKey)))
+  print("xorKey: \"{}\"".format(xorKey))
+  print("Result: \"{}\"".format(vigenereCipherDecrypt(dtxt, xorKey)))
 
+  sleep(2)
+
+#===============================================================================
+#===============================================================================
+# Helper Functions
+#===============================================================================
 
 def compareCharacterFrequencies (freq1: dict, freq2: dict) -> float:
   total = 0
@@ -371,14 +362,29 @@ def calculateCharacterFrequency (string: str, onlyAlpha = True) -> dict:
 
   return characterFrequency
 
-def getAllXorResults (string: str) -> list:
+# Returns a list of all possible single byte xor results
+def getAllSingleByteXorResults (string: str) -> list:
   xorResults = []
 
+  # Generate all possible single byte xor results
   for i in range(0, 256):
     xorResults.append(xor(hexToString(string), chr(i)))
 
   return xorResults
 
+# Returns percent difference between the most and least common characters of the 
+# given string
+def getCharacterPercentDifference (string: str) -> float:
+  freq = calculateCharacterFrequency(string, False)
+  difference = max(freq.values()) - min(freq.values())
+  freqSum = sum(freq.values())
+  averageDifference = difference / freqSum * 100
+  return averageDifference
+  
+#===============================================================================
+#===============================================================================
+# Encoding/Decoding helpers
+#===============================================================================
 
 # Converts a ASCII encoded string to a hex encoded string
 def stringToHex (string: str) -> str:
@@ -403,25 +409,16 @@ def base64ToHex (base64: str) -> str:
 def hexToBase64 (hex: str) -> str:
   return b64encode(bytes.fromhex(hex)).decode('utf-8')
 
-print("stringToHex: {} -> {}".format('aa', stringToHex('aa')))
-print("hexToString: {} -> {}".format('61DD', hexToString('61DD')))
-print("base64ToHex: {} -> {}".format('YWE=', base64ToHex('YWE=')))
-print("hexToBase64: {} -> {}".format('6161', hexToBase64('6161')))
+#===============================================================================
 
-print("=========================================")
+singleByteXor()
 
-print(xor('cat', 'a'))
+print("\n\n\n")
+sleep(6)
 
-print("=========================================")
+multiByteXor()
 
-
-# singleByteXor()
-
-# multiByteXor()
+print("\n\n\n")
+sleep(6)
 
 vigenereCipher()
-
-# v = vigenereCipherEncrypt("HelloIamacactus", "cats")
-# print("v: {}".format(v))
-# print("v: {}".format(vigenereCipherDecrypt(v, "cats")))
-
