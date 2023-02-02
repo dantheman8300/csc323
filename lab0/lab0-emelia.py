@@ -71,7 +71,7 @@ def xor(p, k) -> str:
 
 # checks if s is a letter
 def isLetter(s):
-    if((s >= 'A' and s <= 'Z') or (s >= 'a' and s <= 'z') or s== ' '):
+    if((s >= 'A' and s <= 'Z') or (s >= 'a' and s <= 'z') or s == ' '):
         return True
     return False
 
