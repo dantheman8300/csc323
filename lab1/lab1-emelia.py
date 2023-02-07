@@ -1,6 +1,7 @@
 import base64 
 import time
 import random
+import requests
 # need general xor
 # str to hex
 
@@ -70,7 +71,7 @@ class MerTwist:
         self.lower_mask = (1 << self.r) - 1 # the binary # of r 1's
         self.upper_mask = 0xFFFFFFFF & (~self.lower_mask) # lowest w bits of (not lower_mask)
 
-        self.seed_mt(seed)
+        self.seed_mt(int(seed))
 
 
     # initialize generator from a seed
@@ -154,7 +155,16 @@ def main():
 
     # print(oracle())
 
-    breakMT()
+    # breakMT()
+    url = 'http://localhost:8080/forgot'
+    b64tokens = []
+
+    for i in range(78):
+        x = requests.post(url, {"user": "emelia"})
+        b64tokens.append(x.text.split("reset?token=")[1].split("<!--close_token-->")[0])
+
+    print(b64tokens)
+    
 main()
 
 
