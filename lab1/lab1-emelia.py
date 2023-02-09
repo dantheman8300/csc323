@@ -1,4 +1,4 @@
-import base64 
+import base64 , os
 import time
 import random
 import requests
@@ -114,6 +114,71 @@ class MerTwist:
         self.index = 0
 
 
+    def unmix(self, token):
+        # request 78 consecutive password reset tokens from eortiz
+        # recreate initial state of generator and predict all future password resets
+        token = base64.b64decode(token).decode('utf-8')
+        # print(token)
+        t = token.split(":")
+        x = ""
+        for i in range(len(t)):
+            x += t[i]
+
+        return int(x)
+
+    def undoRightShift(self, val, shift):
+        result = val
+        for _ in range(32):
+            result = val ^ result >> shift
+        return result
+    
+    def undoLeftShift(self, val, shift, mask):
+        result = val
+        for _ in range(32):
+            result = val ^ (result >> shift & mask)
+        return result
+
+
+    def unmix2(self, token):
+        # def twist(self):
+        # for i in range(self.n):
+        #     x = (self.MT[i] & self.upper_mask) + (self.MT[(i+1) % self.n] & self.lower_mask)
+        #     xA = x >> 1
+        #     if (( x % 2) != 0):
+        #         xA = xA ^ self.a
+        #     self.MT[i] = self.MT[(i + self.m) % self.n] ^ xA
+        # self.index = 0
+
+        # y = self.MT[self.index]
+        # y = y ^ ((y >> self.u) & self.d) = y3
+        # y = y ^ ((y << self.s) & self.b) = y6
+        # y = y ^ ((y << self.t) & self.c) = y9
+        # y = y ^ (y >> self.l) = y11
+
+        # 1 ) y >> u
+        # 2 ) y1 & d
+        # 3 ) y ^ y2
+        # 4 ) y3 << s
+        # 5 ) y4 & b
+        # 6 ) y3 ^ y5
+        # 7 ) y6 << t
+        # 8 ) y7 & c 
+        # 9 ) y6 ^ y8
+        # 10) y9 >> l 
+        # 11) y9 ^ y 10
+        # c = y ^ (y >> u & d) ^ y ^ (y >> u & d << s & b) ^ y ^ (y >> u & d) ^ y ^ (y >> u & d << s & b << t & c) ^ y ^ (y >> u & d) ^ y ^ (y >> u & d << s & b) ^ y ^ (y >> u & d) ^ y ^ (y >> u & d << s & b << t & c >> l)
+        # c =  (y >> u & d << s & b << t & c) ^ (y >> u & d << s & b << t & c >> l)
+        # self.index += 1
+
+        # undo this ^^?
+        token = self.undoRightShift(token, self.l)
+        token = self.undoLeftShift(token, self.t, self.c)
+        token = self.undoLeftShift(token, self.s, self.b)
+        token = self.undoRightShift(token, self.u)
+
+
+        return token
+
 
 ## Break it 
 # oracle - can answer questions
@@ -146,17 +211,7 @@ def breakMT():
        print("sad")
 
 
-def unmix(token):
-    # request 78 consecutive password reset tokens from eortiz
-    # recreate initial state of generator and predict all future password resets
-    token = base64.b64decode(token).decode('utf-8')
-    print(token)
-    t = token.split(":")
-    t.remove("")
-    print(t)
-    for i in range(len(t)):
-        t[i] = int(t[i])
-    return t
+
 
 
 def main():
@@ -169,14 +224,23 @@ def main():
 
     # breakMT()
     url = 'http://localhost:8080/forgot'
-    b64tokens = []
-
-    for i in range(78):
+    tokens = []
+    mt = MerTwist(1)
+    for _ in range(78):
         x = requests.post(url, {"user": "emelia"})
-        b64tokens.append(x.text.split("reset?token=")[1].split("<!--close_token-->")[0])
+        tokens.append(mt.unmix(x.text.split("reset?token=")[1].split("<!--close_token-->")[0]))
 
-    print(b64tokens)
+    # print(b64tokens)
+    tokens2 = []
+    for i in range(78):
+        tokens2.append(mt.unmix2(tokens[i]))
+    result = 0
+    if len(tokens ) <= 78:
+        result = (3, tuple(tokens2+[78]), None)
+    # else:
 
+
+    print(result)
 main()
 
 
