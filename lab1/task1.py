@@ -29,13 +29,6 @@ class MersenneTwist:
     for i in range(1, self.n):
       self.MT[i] = (self.f * (self.MT[i - 1] ^ (self.MT[i - 1] >> (self.w - 2))) + i) & 0xFFFFFFFF
 
-    #print("seed in seed_mt: {}".format(self.MT[0]))
-
-
-  # def unseed(self, foundMT):
-  #   for i in range(self.n - 1, -1, -1):
-  #     foundMT[i] = ((((foundMT[i + 1] ^ (foundMT[i + 1] >> (self.w + 2))) - i)) // self.f) & self.upper_mask
-  #   return foundMT[0] #seed
 
   def extract_number(self):
     if self.index >= self.n:
@@ -159,30 +152,12 @@ def getToken():
     for token in baseToken.split(":"):
       tokens.append(int(token))
 
-  # for _ in range(624):
-  #   tokens.append(mt.extract_number())
-
-  # seedOutput = mt.extract_number()
-  # print("seed output: {}".format(seedOutput))
-
-  # print("tokens: {}".format(tokens))
-  # print("len tokens: {}".format(len(tokens)))
-
   internalTokens = []
 
   for i in range(624):
     internalTokens.append(mt.unmix2(tokens[i]))
 
   ourTwisted = mt.ourTwist(internalTokens)
-
-  # print("predicted value: {}".format(mt.mix(ourTwisted[0])))
-  # print("actual value: {}".format(mt.extract_number()))
-
-  # print("predicted value: {}".format(mt.mix(ourTwisted[1])))
-  # print("actual value: {}".format(mt.extract_number()))
-
-  # print("predicted value: {}".format(mt.mix(ourTwisted[2])))
-  # print("actual value: {}".format(mt.extract_number()))
 
   resetToken = str(mt.mix(ourTwisted[0]))
 
@@ -194,53 +169,6 @@ def getToken():
   resetToken = base64.b64encode(resetToken.encode('utf-8')).decode('utf-8')
   print("reset token: {}".format(resetToken))
 
-
-  # ourSeed = mt.unmix2(seedOutput)
-  # print("our seed: {}".format(ourSeed))
-
-  # print("internal tokens: {}".format(internalTokens))
-  # print("len internal tokens: {}".format(len(internalTokens)))
-
-  # foundSeed = mt.unseed(internalTokens)
-
-  # print("found seed: {}".format(foundSeed))
-
-  # mixedTokens = mix(tokens)
-
-  # print("mixed tokens: {}".format(mixedTokens))
-  # print("len mixed tokens: {}".format(len(mixedTokens)))
-
-  # predictedTokens = extractNumbers(mixedTokens)
-
-  # print("predicted tokens: {}".format(predictedTokens))
-  # print("len predicted tokens: {}".format(len(predictedTokens)))
-
-  # newBaseTokens = []
-  # newTokens = []
-
-  # for _ in range(78):
-  #   x = requests.post(url, {"user": "daniel"})
-  #   newBaseTokens.append(base64.b64decode(x.text.split("reset?token=")[1].split("<!--close_token-->")[0]).decode('utf-8')) 
-
-  # # take each base token which is 8 tokens seperated by : and split them into 8 seperate tokens
-  # # then add them to the tokens list  
-  # for baseToken in newBaseTokens: 
-  #   for token in baseToken.split(":"):
-  #     newTokens.append(int(token))
-
-  # for _ in range(624):
-  #   newTokens.append(mt.extract_number())
-  
-  # print("new tokens: {}".format(newTokens))
-  # print("len new tokens: {}".format(len(newTokens)))
-
-  # for i in range(len(newTokens)):
-  #   print("=====================================")  
-  #   print("new token: {}".format(newTokens[i]))
-  #   print("predicted token: {}".format(predictedTokens[i]))
-  #   if (newTokens[i] == predictedTokens[i]):
-  #     print("token is the same")
-  #   print("=====================================")
 
 
 def mix(nums: list = None):
@@ -290,19 +218,5 @@ def main():
   # print(bruteForceOracle())
 
   getToken()
-
-  # def extract_number(self):
-  #   if self.index >= self.n:
-  #     if self.index > self.n:
-  #       raise Exception("Generator was never seeded")
-  #     self.twist()
-
-  #   y = self.MT[self.index]
-  #   y = y ^ ((y >> 11) & 0xFFFFFFFF)
-  #   y = y ^ ((y << 7) & 0x9D2C5680)
-  #   y = y ^ ((y << 15) & 0xEFC60000)
-  #   y = y ^ (y >> 18)
-  #   self.index += 1
-  #   return y & 0xFFFFFFFF
   
 main()
