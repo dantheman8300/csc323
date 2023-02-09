@@ -102,15 +102,10 @@ class MersenneTwist:
 
 
   def unmix2(self, token):
-    #print("unmix end of y: {}".format(token))
     token = self.undoRightShift(token, self.l)
-    #print("unmix xor with y >> 18: {}".format(token))
     token = self.undoLeftShift(token, self.t, self.c)
-    #print("unmix xor with y << 15 & 0xEFC60000: {}".format(token))
     token = self.undoLeftShift(token, self.s, self.b)
-    #print("unmix xor with y << 7 & 0x9D2C5680: {}".format(token))
     token = self.undoRightShift(token, self.u)
-    #print("unmix xor with y >> 11: {}".format(token))
 
     return token
     
@@ -136,14 +131,17 @@ def bruteForceOracle():
   return None
 
 def getToken(): 
-  url = 'http://localhost:8080/forgot'
+  forgetURL = 'http://localhost:8080/forgot'
+  registerURL = 'http://localhost:8080/register'
   baseTokens = []
   tokens = []
 
   mt = MersenneTwist(1)
 
+  requests.post(registerURL, {"user": "daniel", "password": "password"})
+
   for _ in range(78):
-    x = requests.post(url, {"user": "daniel"})
+    x = requests.post(forgetURL, {"user": "daniel"})
     baseTokens.append(base64.b64decode(x.text.split("reset?token=")[1].split("<!--close_token-->")[0]).decode('utf-8')) 
 
   # # take each base token which is 8 tokens seperated by : and split them into 8 seperate tokens
@@ -164,10 +162,14 @@ def getToken():
   for i in range(1, 8):
     resetToken += ":" + str(mt.mix(ourTwisted[i]))
 
-  print("reset token: {}".format(resetToken))
+  x = requests.post(forgetURL, {"user": "admin"})
 
   resetToken = base64.b64encode(resetToken.encode('utf-8')).decode('utf-8')
-  print("reset token: {}".format(resetToken))
+  # print("reset link: http://localhost:8080/reset?token={}".format(resetToken))
+
+  password = input("Enter admin's new password: ")
+
+  x = requests.post("http://localhost:8080/reset?token={}".format(resetToken), {"password": password})
 
 
 
