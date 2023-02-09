@@ -1,11 +1,7 @@
 import base64
 import random
 from time import sleep, time
-
 import requests
-
-from tqdm import tqdm
-
 
 class MersenneTwist: 
   def __init__(self, seed: int):
@@ -21,7 +17,6 @@ class MersenneTwist:
     self.upper_mask = (~self.lower_mask) & 0xFFFFFFFF
 
     self.seed_mt(seed)
-    #print("seed in init: {}".format(self.MT[0]))
 
   def seed_mt(self, seed: int):
     self.index = self.n
@@ -32,36 +27,23 @@ class MersenneTwist:
 
   def extract_number(self):
     if self.index >= self.n:
-      #print("here")
       if self.index > self.n:
         raise Exception("Generator was never seeded")
       self.twist()
 
-    #print("index: {}".format(self.index))
-    #print("seed: {}".format(self.MT[self.index]))
     y = self.MT[self.index]
-    #print("y: {}".format(y))
     y = y ^ ((y >> self.u) & self.d)
-    #print("y: {}".format(y))
     y = y ^ ((y << self.s) & self.b)
-    #print("y: {}".format(y))
     y = y ^ ((y << self.t) & self.c)
-    #print("y: {}".format(y))
     y = y ^ (y >> self.l)
-    #print("y: {}".format(y))
     self.index += 1
     return y & 0xFFFFFFFF
 
   def mix(self, y):
-    #print("y: {}".format(y))
     y = y ^ ((y >> self.u) & self.d)
-    #print("y: {}".format(y))
     y = y ^ ((y << self.s) & self.b)
-    #print("y: {}".format(y))
     y = y ^ ((y << self.t) & self.c)
-    #print("y: {}".format(y))
     y = y ^ (y >> self.l)
-    #print("y: {}".format(y))
     return y & 0xFFFFFFFF
 
   def twist(self):
@@ -82,11 +64,6 @@ class MersenneTwist:
       foundMT[i] = foundMT[(i + self.m) % self.n] ^ xA
 
     return foundMT
-  
-  def untwist(self, foundMT):
-    for i in range(self.n - 1, -1, -1):
-      foundMT[i] = self.unmix1(foundMT[i + 1]) ^ foundMT[(i + self.m) % self.n]
-    return foundMT[0]
 
   def undoRightShift(self, val, shift):
     result = val
@@ -99,7 +76,6 @@ class MersenneTwist:
     for _ in range(32):
       result = val ^ (result << shift & mask)
     return result
-
 
   def unmix2(self, token):
     token = self.undoRightShift(token, self.l)
@@ -171,54 +147,15 @@ def getToken():
 
   x = requests.post("http://localhost:8080/reset?token={}".format(resetToken), {"password": password})
 
-
-
-def mix(nums: list = None):
-  n = 624
-  r = 31
-  m = 397
-  a = 0x9908B0DF
-  lower_mask = (1 << r) - 1
-  upper_mask = (~lower_mask) & 0xFFFFFFFF
-
-  for i in range(n):
-    x = (nums[i] & upper_mask) + (nums[(i + 1) % n] & lower_mask)
-    xA = x >> 1
-    if x % 2 != 0:
-      xA = xA ^ a
-    nums[i] = nums[(i + m) % n] ^ xA
-
-  return nums
-
-def extractNumbers(nums: list = None):
-  n = 624
-  u = 11
-  d = 0xFFFFFFFF
-  s = 7
-  b = 0x9D2C5680
-  t = 15
-  c = 0xEFC60000
-  l = 18
-
-  extractNums = []
-
-  for i in range(n):
-    y = nums[i]
-    y = y ^ ((y >> u) & d)
-    y = y ^ ((y << s) & b)
-    y = y ^ ((y << t) & c)
-    y = y ^ (y >> l)
-    extractNums.append(y & 0xFFFFFFFF)
-  
-  return extractNums
-
 def main():
+  # task 1
   # mt = MersenneTwist(0)
   # for _ in range(10):
   #   print(mt.extract_number())
 
   # print(bruteForceOracle())
 
+  # task 2
   getToken()
   
 main()
