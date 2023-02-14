@@ -118,6 +118,8 @@ def bruteForceOracle():
 
 # Task # 2 
 def getToken(): 
+
+  # local host to 127.0.0.1
   url = 'http://localhost:8080/forgot'
   baseTokens = []
   tokens = []
