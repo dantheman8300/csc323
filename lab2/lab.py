@@ -110,7 +110,7 @@ def encrypt_cbc(fileNameIn: str, fileNameOut: str, key=b'1234567812345678',  bmp
 
   return iv
 
-def decrypt_cbc(fileNameIn: str, fileNameOut: str, iv, key, bmp = False) -> bytes:
+def decrypt_cbc(fileNameIn: str, fileNameOut: str, key, bmp = False) -> bytes:
   # Read input file
   fileIn = open(fileNameIn, "rb")
   if (bmp):
@@ -121,20 +121,21 @@ def decrypt_cbc(fileNameIn: str, fileNameOut: str, iv, key, bmp = False) -> byte
   if (bmp):
     fileOut.write(headerBytes)
 
+  # get IV
+  iv = fileIn.read(16)
+  prevCipherText = iv
+
   # Read first block of data
   block = fileIn.read(16)
-
-  # gernerate IV
-  prevCipherText = iv
 
   while(len(block) > 0):
     # create aes cipher
     cipher = AES.new(key, AES.MODE_ECB)
 
-    blockCipherText = cipher.decrypt(xor(block, prevCipherText))
+    blockCipherText = xor(cipher.decrypt(block), prevCipherText)
     fileOut.write(blockCipherText)
 
-    prevCipherText = blockCipherText
+    prevCipherText = block
     block = fileIn.read(16)
 
     # if (len(block) == 0):
@@ -209,7 +210,6 @@ def ECBCookies():
   print("cookie: {}".format(cookie))
 
 # 1234567812345678
-
 # user=123456789&u
 # id=2&role=user--
 
@@ -238,12 +238,12 @@ def CBCCookies():
 
   # attack cookie - perform bit flipping attack
   cookie = bytearray.fromhex(cookie)
-  cookie[10] = cookie[10] ^ ord('u') ^ ord('a')
-  cookie[11] = cookie[11] ^ ord('s') ^ ord('d')
-  cookie[12] = cookie[12] ^ ord('e') ^ ord('m')
-  cookie[13] = cookie[13] ^ ord('r') ^ ord('i')
-  cookie[14] = cookie[14] ^ ord('\x00') ^ ord('n')
-  cookie[15] = cookie[15] ^ ord('\x02') ^ ord('\x01')
+  cookie[10 + 16] = cookie[10 + 16] ^ ord('u') ^ ord('a')
+  cookie[11 + 16] = cookie[11 + 16] ^ ord('s') ^ ord('d')
+  cookie[12 + 16] = cookie[12 + 16] ^ ord('e') ^ ord('m')
+  cookie[13 + 16] = cookie[13 + 16] ^ ord('r') ^ ord('i')
+  cookie[14 + 16] = cookie[14 + 16] ^ ord('\x00') ^ ord('n')
+  cookie[15 + 16] = cookie[15 + 16] ^ ord('\x02') ^ ord('\x01')
 
   cookie = cookie.hex()
 
@@ -335,11 +335,11 @@ def xor(a: bytes, b: bytes) -> bytes:
 
 # ECBCookies()  
 
-CBCCookies()
+# CBCCookies()
 
-# base64DecodeFile("Lab2.TaskIII.A.txt", "Lab2.TaskIII.A.decoded.txt")
-# decrypt_cbc_actual("Lab2.TaskIII.A.decoded.txt", "Lab2.TaskIII.A.decrypted.actual.txt", key = b'MIND ON MY MONEY', iv=b'MONEY ON MY MIND')
-# decrypt_cbc("Lab2.TaskIII.A.decoded.txt", "Lab2.TaskIII.A.decrypted.txt", key = b'MIND ON MY MONEY', iv=b'MONEY ON MY MIND')
+base64DecodeFile("Lab2.TaskIII.A.txt", "Lab2.TaskIII.A.decoded.txt")
+# # decrypt_cbc_actual("Lab2.TaskIII.A.decoded.txt", "Lab2.TaskIII.A.decrypted.actual.txt", key = b'MIND ON MY MONEY', iv=b'MONEY ON MY MIND')
+decrypt_cbc("Lab2.TaskIII.A.decoded.txt", "Lab2.TaskIII.A.decrypted.txt", key = b'MIND ON MY MONEY')
 # iv = encrypt_cbc("cp-logo.bmp", "cp-logo-cbc.bmp", key = b'CALIFORNIA LOVE!', bmp=True)
 # decrypt_cbc("cp-logo-cbc.bmp", "cp-logo-cbc-decrypted.bmp", iv, key = b'CALIFORNIA LOVE!', bmp=True)
 # decrypt_cbc_actual("cp-logo-cbc.bmp", "cp-logo-cbc-decrypted.bmp", iv)
