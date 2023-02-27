@@ -181,7 +181,7 @@ def ECBCookies():
   url = 'http://localhost:8080/register'
   url2 = 'http://localhost:8080/'
   url3 = 'http://localhost:8080/home'
-  username = "12345678912" + "user\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0C" + "admin\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0B" + "user\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0C" + "123"
+  username = "12345678912" + "user\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0C" + "admin\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0B" + "user\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x0C" + "1234"
   password = 'a'
 
   # register
@@ -209,20 +209,28 @@ def ECBCookies():
 
   print("cookie: {}".format(cookie))
 
-# 1234567812345678
-# user=123456789&u
-# id=2&role=user--
+# MONEY ON MY MIND <- IV
+# user=12345678912
+# 12345678912345&u
+# id=X&role=user--
+
+# MONEY ON ******* <- IV
+# user=1234&uid=6&
+# *234567891******
+# &d=X&role=admin-
 
 def CBCCookies():
   session = requests.Session()
   url = 'http://localhost:8080/register'
   url2 = 'http://localhost:8080/'
   url3 = 'http://localhost:8080/home'
-  username = '123456789'
+  username = '12345678912' + '12345678912345'
+  attackedUsername = '1234'
   password = 'a'
 
   # register
   z = session.post(url, {"user" : username, "password" : password})
+  # z = session.post(url, {"user" : attackedUsername, "password" : password})
 
   # login
   y = session.post(url2, {"user" : username, "password" : password})
@@ -236,14 +244,26 @@ def CBCCookies():
   for i in range(0, len(cookie), 32):
     print(cookie[i:i+32])
 
+  print("OG cookie: {}".format(cookie))
+
   # attack cookie - perform bit flipping attack
   cookie = bytearray.fromhex(cookie)
-  cookie[10 + 16] = cookie[10 + 16] ^ ord('u') ^ ord('a')
-  cookie[11 + 16] = cookie[11 + 16] ^ ord('s') ^ ord('d')
-  cookie[12 + 16] = cookie[12 + 16] ^ ord('e') ^ ord('m')
-  cookie[13 + 16] = cookie[13 + 16] ^ ord('r') ^ ord('i')
-  cookie[14 + 16] = cookie[14 + 16] ^ ord('\x00') ^ ord('n')
-  cookie[15 + 16] = cookie[15 + 16] ^ ord('\x02') ^ ord('\x01')
+
+  cookie[9 + 16 * 0]  ^= ord('5') ^ ord('&')
+  cookie[10 + 16 * 0] ^= ord('6') ^ ord('u')
+  cookie[11 + 16 * 0] ^= ord('7') ^ ord('i')
+  cookie[12 + 16 * 0] ^= ord('8') ^ ord('d')
+  cookie[13 + 16 * 0] ^= ord('9') ^ ord('=')
+  cookie[14 + 16 * 0] ^= ord('1') ^ ord('6')
+  cookie[15 + 16 * 0] ^= ord('2') ^ ord('&')
+
+  cookie[0 + 16 * 2]  ^= ord('1') ^ ord('&')
+  cookie[10 + 16 * 2] ^= ord('u') ^ ord('a')
+  cookie[11 + 16 * 2] ^= ord('s') ^ ord('d')
+  cookie[12 + 16 * 2] ^= ord('e') ^ ord('m')
+  cookie[13 + 16 * 2] ^= ord('r') ^ ord('i')
+  cookie[14 + 16 * 2] ^= ord('\x00') ^ ord('n')
+  cookie[15 + 16 * 2] ^= ord('\x02') ^ ord('\x01')
 
   cookie = cookie.hex()
 
@@ -252,15 +272,7 @@ def CBCCookies():
   for i in range(0, len(cookie), 32):
     print(cookie[i:i+32])
 
-  print('cookie: {}'.format(cookie))
-
-
-  # # print cookie in blocks of 16 bytes
-  # print("Attacked Cookie: ")
-  # for i in range(0, len(cookie), 32):
-  #   print(cookie[i:i+32])
-
-  # print("cookie: {}".format(cookie))
+  print('attacked cookie: {}'.format(cookie))
 
 # Take a file with hex encoded BMPs, seperated by a new line, and decode them
 # into a file with the decoded BMPs
@@ -335,11 +347,11 @@ def xor(a: bytes, b: bytes) -> bytes:
 
 # ECBCookies()  
 
-# CBCCookies()
+CBCCookies()
 
-base64DecodeFile("Lab2.TaskIII.A.txt", "Lab2.TaskIII.A.decoded.txt")
+# base64DecodeFile("Lab2.TaskIII.A.txt", "Lab2.TaskIII.A.decoded.txt")
 # # decrypt_cbc_actual("Lab2.TaskIII.A.decoded.txt", "Lab2.TaskIII.A.decrypted.actual.txt", key = b'MIND ON MY MONEY', iv=b'MONEY ON MY MIND')
-decrypt_cbc("Lab2.TaskIII.A.decoded.txt", "Lab2.TaskIII.A.decrypted.txt", key = b'MIND ON MY MONEY')
+# decrypt_cbc("Lab2.TaskIII.A.decoded.txt", "Lab2.TaskIII.A.decrypted.txt", key = b'MIND ON MY MONEY')
 # iv = encrypt_cbc("cp-logo.bmp", "cp-logo-cbc.bmp", key = b'CALIFORNIA LOVE!', bmp=True)
 # decrypt_cbc("cp-logo-cbc.bmp", "cp-logo-cbc-decrypted.bmp", iv, key = b'CALIFORNIA LOVE!', bmp=True)
 # decrypt_cbc_actual("cp-logo-cbc.bmp", "cp-logo-cbc-decrypted.bmp", iv)
