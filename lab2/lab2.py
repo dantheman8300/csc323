@@ -406,4 +406,4 @@ def task3_decrypt():
 def task3_cookies():
     CBC_Cookies()
 
-task3_cookies()
+task2c()
