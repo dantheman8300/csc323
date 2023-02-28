@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 
 lab2/*.bmp
+lab2/mustang-e-cbc.txt
 
 # C extensions
 *.so
