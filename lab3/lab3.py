@@ -7,18 +7,23 @@ def pad_oracle():
     url3= 'http://localhost:8080/submit'
 
     guess = '9'
-
+    val = "h"
 # open ssl - speed test (how many hashes you can do per sec)
-    req = requests.get(url2).text
-    check = requests.get(url)
 
+    # get leaked cipher text
+    req = requests.get(url2).text
     cipher = req.split("<font color=\"red\"> ")[1].split(" </font></p>")[0]
     print("Leaked cipher text:" + cipher)
 
+    t = cipher[len(cipher) - 1] ^ "h" ^ "\x01"
 
-    
 
-
+    # check for 404 (not found) or 403 (forbidden)
+    check = requests.get(url, {"enc": t}).text
+    if ("403" in check):
+        print("Fail")
+    if ("404" in check):
+        print("Success")
     # print(check)
 
 
