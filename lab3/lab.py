@@ -12,7 +12,7 @@ def padAttackOneChar(cipherblock: bytearray, index: int, previousChars: bytearra
   currChar = 0
 
   # initialize the padding of all previous characters
-  paddingByte = (16 -( index + 1)).to_bytes(1, byteorder='big')
+  paddingByte = (16 - ( index + 1)).to_bytes(1, byteorder='big')
   print("paddingByte: ", paddingByte)
   i = index + 1
   for char in previousChars:
@@ -26,7 +26,7 @@ def padAttackOneChar(cipherblock: bytearray, index: int, previousChars: bytearra
   # pad the cipherblock with all possible characters until the padding is valid
   while (currChar < 256):
     cipherblock[index] = cipherCharAtIndex ^ currChar ^ ord(paddingByte)
-    if (pad_oracle(cipherblock)):
+    if (pad_oracle(cipherblock) and currChar != 1):
       print("currChar: ", currChar)
       print("cipherblock: ", cipherblock)
       return currChar
@@ -45,7 +45,20 @@ def getCipherText():
   cipher = req.split("<font color=\"red\"> ")[1].split(" </font></p>")[0]
   return cipher
 
+def disassembleCipherText(cipherTextHex: str):
+  cipherText = bytearray.fromhex(cipherTextHex)
+  cipherBlocks = []
+  for i in range(0, len(cipherText), 16):
+    cipherBlocks.append(cipherText[i:i+16])
+  return cipherBlocks
 
+
+def assembleCipherText(cipherBlocks: list):
+  cipherText = bytearray()
+  for block in cipherBlocks:
+    cipherText += block
+  
+  return cipherText.hex()
 
 
 def pad_oracle(cipherText: bytearray):
@@ -63,24 +76,40 @@ def pad_oracle(cipherText: bytearray):
 def main():
   cipherTextHex = getCipherText()
   # print cipherTextHex in blocks of 32 characters
-  for i in range(0, len(cipherTextHex), 32):
-    print(cipherTextHex[i:i+32])
+  # for i in range(0, len(cipherTextHex), 32):
+  #   print(cipherTextHex[i:i+32])
+
+  # print("initial pad_oracle: ", pad_oracle(cipherTextHex))
     
+  cipherTextBlocks = disassembleCipherText(cipherTextHex)
+  plainTextBlocks = [bytearray(16) for i in range(len(cipherTextBlocks))]
 
-  cipherText = bytearray.fromhex(cipherTextHex)
+  print("cipherTextBlocks: ", cipherTextBlocks)
+  print("plainTextBlocks: ", plainTextBlocks)
 
 
-  originalCipherChar = copy.copy(cipherText[15 + 16 * 2])
+  originalCipherChar = copy.copy(cipherTextBlocks[3][15])
 
-  for i in range(256): 
-    cipherText[15 + 16 * 2] = originalCipherChar ^ i ^ ord('\01')
-    attackedCipherTextHex = cipherText.hex()
-    if (pad_oracle(cipherText)):
-      print('char: ', i)
-      print("attackedCipherTextHex: ", attackedCipherTextHex)
+  for charCode in range(256):  
+    cipherTextBlocks[3][15] = originalCipherChar ^ charCode ^ ord('\x01')
+    if (pad_oracle(assembleCipherText(cipherTextBlocks)) and cipherTextBlocks[3][15] != originalCipherChar):
+      print('char1: "{}"'.format(chr(charCode)))
+      plainTextBlocks[4][15] = charCode
       break
 
-  print('end')
+  originalCipherChar = copy.copy(cipherTextBlocks[3][14])
+  # cipherTextBlocks[3][15] = originalCipherChar ^ ord('\n') ^ ord('\x02')
+
+  for charCode in range(1, 256):  
+    cipherTextBlocks[3][14] = originalCipherChar ^ charCode ^ ord('\x02')
+    if (pad_oracle(assembleCipherText(cipherTextBlocks)) and cipherTextBlocks[3][14] != originalCipherChar):
+      print('char2: {} -> "{}"'.format(charCode, chr(charCode)))
+      plainTextBlocks[4][14] = charCode
+      # break
+  
+  print("plainTextBlocks: ", plainTextBlocks)
+
+  # print('end')
 
   
 
