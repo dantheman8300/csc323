@@ -2,6 +2,7 @@ from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 import requests
 import copy
+# from tqdm import tqdm
 
 # This function is used to determine the character at the given index of the 
 # given cipherblock's plaintext. It does this by padding the cipherblock up to 
@@ -56,6 +57,7 @@ def disassembleCipherText(cipherTextHex: str):
 def assembleCipherText(cipherBlocks: list):
   cipherText = bytearray()
   for block in cipherBlocks:
+    print(block)
     cipherText += block
   
   return cipherText.hex()
@@ -67,11 +69,17 @@ def pad_oracle(cipherText: bytearray):
 
 
     # check for 404 (not found) or 403 (forbidden)
-    check = requests.get(url, {"enc": cipherText}).text
+    check = requests.get(url, {"enc": cipherText.hex()}).text
     if ("403" in check):
       return False
     if ("404" in check):
       return True
+    
+def submitMessage(message: str):
+  url = 'http://localhost:8080/submit'
+  req = requests.post(url, {"guess": message}).text.split("<font color=\"black\">")[1].split("</font></p>")[0]
+
+  print(req)
 
 def main():
   cipherTextHex = getCipherText()
@@ -82,32 +90,54 @@ def main():
   # print("initial pad_oracle: ", pad_oracle(cipherTextHex))
     
   cipherTextBlocks = disassembleCipherText(cipherTextHex)
+  # for (i, block) in enumerate(cipherTextBlocks):
+  #   print("block {}: {}".format(i, block))
   plainTextBlocks = [bytearray(16) for i in range(len(cipherTextBlocks))]
+  templateBlock = bytearray(16)
 
-  print("cipherTextBlocks: ", cipherTextBlocks)
-  print("plainTextBlocks: ", plainTextBlocks)
+  for blockIndex in range(1, len(cipherTextBlocks)):
+    for i in range(15, -1, -1):
+      paddingByte = (16 - ( i )).to_bytes(1, byteorder='big')
+      for j in range(i + 1, 16):
+        templateBlock[j] = cipherTextBlocks[blockIndex - 1][j] ^ plainTextBlocks[blockIndex][j] ^ ord(paddingByte)
+      for charCode in range(0, 256):  
+        templateBlock[i] = cipherTextBlocks[blockIndex - 1][i] ^ charCode ^ ord(paddingByte)
+        if (pad_oracle(templateBlock + cipherTextBlocks[blockIndex])):
+          # print('char: i: {} blockIndex: {} "{}"'.format(i, blockIndex, chr(charCode)))
+          plainTextBlocks[blockIndex][i] = charCode
+          break
 
 
-  originalCipherChar = copy.copy(cipherTextBlocks[3][15])
 
-  for charCode in range(256):  
-    cipherTextBlocks[3][15] = originalCipherChar ^ charCode ^ ord('\x01')
-    if (pad_oracle(assembleCipherText(cipherTextBlocks)) and cipherTextBlocks[3][15] != originalCipherChar):
-      print('char1: "{}"'.format(chr(charCode)))
-      plainTextBlocks[4][15] = charCode
-      break
+  # print("cipherTextBlocks: ", cipherTextBlocks)
+  print("plainTextBlocks: ", (plainTextBlocks[1] + plainTextBlocks[2]))
 
-  originalCipherChar = copy.copy(cipherTextBlocks[3][14])
-  # cipherTextBlocks[3][15] = originalCipherChar ^ ord('\n') ^ ord('\x02')
+  # submitMessage("So I roll through good")
 
-  for charCode in range(1, 256):  
-    cipherTextBlocks[3][14] = originalCipherChar ^ charCode ^ ord('\x02')
-    if (pad_oracle(assembleCipherText(cipherTextBlocks)) and cipherTextBlocks[3][14] != originalCipherChar):
-      print('char2: {} -> "{}"'.format(charCode, chr(charCode)))
-      plainTextBlocks[4][14] = charCode
-      # break
+
+  # originalCipherChar = copy.copy(cipherTextBlocks[3][15])
+
+  # for charCode in range(256):  
+  #   cipherTextBlocks[3][15] = originalCipherChar ^ charCode ^ ord('\x01')
+  #   if (pad_oracle(assembleCipherText(cipherTextBlocks)) and cipherTextBlocks[3][15] != originalCipherChar):
+  #     print('char1: "{}"'.format(chr(charCode)))
+  #     plainTextBlocks[4][15] = charCode
+  #     break
+  # cipherTextBlocks[3][15] = originalCipherChar
+
+
+
+  # originalCipherChar = copy.copy(cipherTextBlocks[3][14])
+  # # cipherTextBlocks[3][15] = originalCipherChar ^ ord('\n') ^ ord('\x02')
+
+  # for charCode in range(1, 256):  
+  #   cipherTextBlocks[3][14] = originalCipherChar ^ charCode ^ ord('\x02')
+  #   if (pad_oracle(assembleCipherText(cipherTextBlocks)) and cipherTextBlocks[3][14] != originalCipherChar):
+  #     print('char2: {} -> "{}"'.format(charCode, chr(charCode)))
+  #     plainTextBlocks[4][14] = charCode
+  #     # break
   
-  print("plainTextBlocks: ", plainTextBlocks)
+  # print("plainTextBlocks: ", plainTextBlocks)
 
   # print('end')
 
