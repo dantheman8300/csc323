@@ -40,35 +40,29 @@ def pad_oracle(cipherText: bytearray):
 def task_1():
     cipherTextHex = getCipherText()
     cipherTextBlocks = disassembleCipherText(cipherTextHex)
-    plainTextBlocks = [bytearray(16) for i in range(len(cipherTextBlocks))]
-
-    print("cipherTextBlocks: ", cipherTextBlocks)
-    print("plainTextBlocks: ", plainTextBlocks)
-
-
-    originalCipherChar = copy.copy(cipherTextBlocks[3][15])
-
-    for charCode in range(256):  
-        cipherTextBlocks[3][15] = originalCipherChar ^ charCode ^ ord('\x01')
-        if (pad_oracle(assembleCipherText(cipherTextBlocks)) and cipherTextBlocks[3][15] != originalCipherChar):
-            print('char1: "{}"'.format(chr(charCode)))
-            plainTextBlocks[4][15] = charCode
-            break
-
-    originalCipherChar = copy.copy(cipherTextBlocks[3][14])
-    # cipherTextBlocks[3][15] = originalCipherChar ^ ord('\n') ^ ord('\x02')
-
-    for charCode in range(1, 256):  
-        cipherTextBlocks[3][14] = originalCipherChar ^ charCode ^ ord('\x02')
-        if (pad_oracle(assembleCipherText(cipherTextBlocks)) and cipherTextBlocks[3][14] != originalCipherChar):
-            print('char2: {} -> "{}"'.format(charCode, chr(charCode)))
-            plainTextBlocks[4][14] = charCode
-            # break
   
-    print("plainTextBlocks: ", plainTextBlocks)
+    plainTextBlocks = [bytearray(16) for i in range(len(cipherTextBlocks))]
+    templateBlock = bytearray(16)
+
+    for blockIndex in range(1, len(cipherTextBlocks)):
+        for i in range(15, -1, -1):
+            paddingByte = (16 - ( i )).to_bytes(1, byteorder='big')
+            for j in range(i + 1, 16):
+                templateBlock[j] = cipherTextBlocks[blockIndex - 1][j] ^ plainTextBlocks[blockIndex][j] ^ ord(paddingByte)
+            for charCode in range(0, 256):  
+                templateBlock[i] = cipherTextBlocks[blockIndex - 1][i] ^ charCode ^ ord(paddingByte)
+                if (pad_oracle(templateBlock + cipherTextBlocks[blockIndex])):
+                # print('char: i: {} blockIndex: {} "{}"'.format(i, blockIndex, chr(charCode)))
+                    plainTextBlocks[blockIndex][i] = charCode
+                    break
 
 
 
+  # print("cipherTextBlocks: ", cipherTextBlocks)
+    print("plainTextBlocks: ", (plainTextBlocks[1] + plainTextBlocks[2]))
+
+
+# Task II
 def sha1(msg):
     h0 = 0x67452301
     h1 = 0xEFCDAB89
@@ -135,7 +129,6 @@ def sha1(msg):
     # return (h0 << 128) | (h1 << 96) | (h2 << 64) | (h3 << 32) | h4
 
 
-
 def test_sha(msg, ans):
     if(msg == ans):
         print("correct!")
@@ -144,7 +137,41 @@ def test_sha(msg, ans):
         print(ans)
         print("sad:(")
 
+
+def sha1_collision():
+    return 0
+
+
+
+# Task III 
+def len_ext_attack():
+    return 0
+
+def hmac_sha1():
+    return 0
+
+
+
+# Task IV
+
+def time_attack():
+    return 0
+
+def improve_attack():
+    return 0
+
+def const_time_verify():
+    return 0
+
+
+
+
+
+
+
 # test_sha(sha1(""), "da39a3ee5e6b4b0d3255bfef95601890afd80709")
 # test_sha(sha1("abc"), "a9993e364706816aba3e25717850c26c9cd0d89d")
 # test_sha(sha1("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"), "84983e441c3bd26ebaae4aa1f95129e5e54670f1")
 # test_sha(sha1("abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"), "a49b2446a02c645bf419f995b67091253a04a259")
+
+# task_1()
