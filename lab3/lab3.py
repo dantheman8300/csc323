@@ -1,3 +1,4 @@
+import struct
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 import requests
@@ -75,4 +76,75 @@ def sha1(msg):
     h3 = 0x10325476
     h4 = 0xC3D2E1F0
 
-    ml = int.to_bytes(len(msg), "big")
+    message = bytearray(msg, 'utf-8')
+    ml = 8 * len(message)
+    message.append(0x80)
+    while len(message) % 64 != 56:
+        message.append(0x00)
+    message += struct.pack(">Q", ml)
+
+ # Process message in 512-bit chunks
+    for i in range(0, len(message), 64):
+        chunk = message[i:i+64]
+
+        # Break chunk into 16 32-bit words
+        w = list(struct.unpack(">16L", chunk))
+
+        # Extend the 16 32-bit words into 80 32-bit words
+        for j in range(16, 80):
+            w.append((((w[j-3] ^ w[j-8] ^ w[j-14] ^ w[j-16]) << 1) | ((w[j-3] ^ w[j-8] ^ w[j-14] ^ w[j-16]) >> 31)) & 0xFFFFFFFF)
+
+        # Initialize hash value for this chunk
+        a = h0
+        b = h1
+        c = h2
+        d = h3
+        e = h4
+
+        # Main loop
+        for j in range(80):
+            if j <= 19:
+                f = (b & c) ^ ((~b) & d)
+                k = 0x5A827999
+            elif j <= 39:
+                f = b ^ c ^ d
+                k = 0x6ED9EBA1
+            elif j <= 59:
+                f = (b & c) ^ (b & d) ^ (c & d)
+                k = 0x8F1BBCDC
+            else:
+                f = b ^ c ^ d
+                k = 0xCA62C1D6
+
+            temp = (((a << 5) | (a >> 27)) & 0xFFFFFFFF) + f + e + k + w[j] & 0xFFFFFFFF
+            e = d
+            d = c
+            c = (((b << 30) | (b >> 2)) & 0xFFFFFFFF)
+            b = a
+            a = temp
+
+        # Add this chunk's hash to result so far
+        h0 = (h0 + a) & 0xFFFFFFFF
+        h1 = (h1 + b) & 0xFFFFFFFF
+        h2 = (h2 + c) & 0xFFFFFFFF
+        h3 = (h3 + d) & 0xFFFFFFFF
+        h4 = (h4 + e) & 0xFFFFFFFF
+
+    # Produce the final hash value
+    return "%08x%08x%08x%08x%08x" % (h0, h1, h2, h3, h4)
+    # return (h0 << 128) | (h1 << 96) | (h2 << 64) | (h3 << 32) | h4
+
+
+
+def test_sha(msg, ans):
+    if(msg == ans):
+        print("correct!")
+    else:
+        print(msg)
+        print(ans)
+        print("sad:(")
+
+# test_sha(sha1(""), "da39a3ee5e6b4b0d3255bfef95601890afd80709")
+# test_sha(sha1("abc"), "a9993e364706816aba3e25717850c26c9cd0d89d")
+# test_sha(sha1("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"), "84983e441c3bd26ebaae4aa1f95129e5e54670f1")
+# test_sha(sha1("abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"), "a49b2446a02c645bf419f995b67091253a04a259")
