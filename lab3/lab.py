@@ -73,7 +73,7 @@ def sha1(msg):
   # return (h0 << 128) | (h1 << 96) | (h2 << 64) | (h3 << 32) | h4
 
 def sha(inputText: str, bits: int): 
-  key = sha1(inputText.encode()).hexdigest()
+  key = sha1(inputText)
   key = int(key, 16)
   key = '{:b}'.format(key)
   return key[0:bits]
@@ -267,7 +267,7 @@ def main():
   test_sha(sha1(""), "da39a3ee5e6b4b0d3255bfef95601890afd80709")
   test_sha(sha1("abc"), "a9993e364706816aba3e25717850c26c9cd0d89d")
 
-  print(sha("abc", 1))
+  print(sha("abc", 15))
 
   
 
