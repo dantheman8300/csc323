@@ -1,5 +1,5 @@
 import struct
-import time
+from time import time
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 import requests
@@ -264,10 +264,17 @@ def main():
   # print('end')
 
 
-  test_sha(sha1(""), "da39a3ee5e6b4b0d3255bfef95601890afd80709")
-  test_sha(sha1("abc"), "a9993e364706816aba3e25717850c26c9cd0d89d")
+  # test_sha(sha1(""), "da39a3ee5e6b4b0d3255bfef95601890afd80709")
+  # test_sha(sha1("abc"), "a9993e364706816aba3e25717850c26c9cd0d89d")
 
-  print(sha("abc", 15))
+  # print(sha("abc", 15))
+
+  findAllCollisionsBirthday()
+
+
+def findAllCollisionsBirthday():
+  for i in range(8, 51, 2):
+    print(findCollisionBirthday(i))
 
   
 
