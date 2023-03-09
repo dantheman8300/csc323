@@ -174,4 +174,4 @@ def const_time_verify():
 # test_sha(sha1("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"), "84983e441c3bd26ebaae4aa1f95129e5e54670f1")
 # test_sha(sha1("abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"), "a49b2446a02c645bf419f995b67091253a04a259")
 
-# task_1()
+task_1()
