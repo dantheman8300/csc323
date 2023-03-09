@@ -1,4 +1,5 @@
 import struct
+import time
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 import requests
@@ -130,16 +131,81 @@ def sha1(msg):
 
 
 def test_sha(msg, ans):
-    if(msg == ans):
-        print("correct!")
-    else:
-        print(msg)
-        print(ans)
-        print("sad:(")
+    hash = sha(msg, 50) 
+    hash2 = sha(ans, 50) 
+    # if(hash == sha1(ans)):
+    print("sha hash: " + hash)
+    print("sha hash: " + hash2)
+    print("string 1: " + msg)
+    print("string 2: " + ans)
+    print("correct!")
+    # else:
+    #     print(msg)
+    #     print(ans)
+    #     print("sad:(")
 
 
-def sha1_collision():
-    return 0
+def sha(inputText: str, bits: int): 
+  key = sha1(inputText)
+  key = int(key, 16)
+  key = '{:b}'.format(key)
+  return key[0:bits]
+
+# test_sha('"4QA', "HS&[")
+
+def findCollisionBirthday(bits: int):
+  hashes = {}
+  currentMessage = ' '
+  currentHash = ''
+  currentIndexToIncrement = 0
+  numInputs = 0
+  startTime = time.time()
+
+  while(True):
+    numInputs += 1
+
+    currentMessageBytes = bytearray(currentMessage, 'utf-8')
+    while(currentMessageBytes[currentIndexToIncrement] >= 126):
+      if (currentIndexToIncrement == 0):
+        currentMessage = ' '*(len(currentMessage)+1)
+        currentMessageBytes = bytearray(currentMessage, 'utf-8')
+        currentIndexToIncrement = len(currentMessageBytes) - 1
+        break
+      currentMessageBytes[currentIndexToIncrement] = 32 # space
+      currentMessageBytes[currentIndexToIncrement - 1] += 1
+      currentIndexToIncrement -= 1
+    currentIndexToIncrement = len(currentMessageBytes) - 1
+    
+    currentMessageBytes[currentIndexToIncrement] += 1
+    currentMessage = currentMessageBytes.decode()
+    currentHash = sha(currentMessage, bits)
+
+    existingMessage = hashes.get(currentHash)
+
+    if(existingMessage != None):
+      endTime = time()
+
+      totalElapsedTime = endTime - startTime
+
+      collisionOutputFile = open('collision-{}.txt'.format(bits), 'w')
+
+      collisionOutputFile.write('collision message 1: \"{}\"\n'.format(currentMessage))
+      collisionOutputFile.write('collision message 2: \"{}\"\n'.format(existingMessage))
+      collisionOutputFile.write('elapsed time: {:.6f} seconds\n'.format(totalElapsedTime))
+      collisionOutputFile.write('inputs tested: {}\n'.format(numInputs))
+
+      collisionOutputFile.close()
+      
+      return(bits, existingMessage, currentMessage, totalElapsedTime, numInputs)
+
+    hashes[currentHash] = currentMessage
+
+
+# print(findCollisionBirthday(50))
+
+def findAllCollisionsBirthday():
+  for i in range(8, 51, 2):
+    print(findCollisionBirthday(i))
 
 
 
@@ -174,4 +240,6 @@ def const_time_verify():
 # test_sha(sha1("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"), "84983e441c3bd26ebaae4aa1f95129e5e54670f1")
 # test_sha(sha1("abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu"), "a49b2446a02c645bf419f995b67091253a04a259")
 
-task_1()
+# task_1()
+
+# findAllCollisionsBirthday()
