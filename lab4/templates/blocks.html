@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Block Viewer</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style>
+		body {
+			background-color: #1c1c1c;
+			color: white;
+			font-family: Arial, Helvetica, sans-serif;
+		}
+
+		table {
+			border-collapse: collapse;
+			width: 100%;
+		}
+
+		th, td {
+			text-align: left;
+			padding: 8px;
+		}
+
+		tr:nth-child(even){background-color: #2b2b2b}
+
+		th {
+			background-color: #4CAF50;
+			color: white;
+		}
+
+		@media only screen and (max-width: 768px) {
+			table {
+				font-size: 12px;
+			}
+
+			th, td {
+				padding: 6px;
+			}
+		}
+
+		.truncate {
+			max-width: 100px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.truncate:hover {
+			max-width: none;
+			overflow: visible;
+			z-index: 1000;
+			position: absolute;
+			background-color: #2b2b2b;
+			border: 1px solid white;
+			padding: 5px;
+			font-size: 14px;
+			font-weight: normal;
+			text-align: left;
+			box-shadow: 5px 5px 5px rgba(0,0,0,0.5);
+		}
+
+		@media (prefers-color-scheme: light) {
+			body {
+				background-color: white;
+				color: black;
+			}
+
+			tr:nth-child(even){background-color: #f2f2f2}
+
+			th {
+				background-color: #4CAF50;
+				color: white;
+			}
+
+			.truncate:hover {
+				background-color: white;
+				border: 1px solid black;
+			}
+		}
+
+		@media (prefers-color-scheme: dark) {
+			body {
+				background-color: #1c1c1c;
+				color: white;
+			}
+
+			tr:nth-child(even){background-color: #2b2b2b}
+
+			th {
+				background-color: #4CAF50;
+				color: white;
+			}
+
+			.truncate:hover {
+				background-color: #2b2b2b;
+				border: 1px solid white;
+			}
+		}
+		header {
+			background-color: #333;
+			color: #fff;
+			padding: 10px;
+			text-align: center;
+		}
+		nav {
+			background-color: #f2f2f2;
+			border: 1px solid #ccc;
+			border-radius: 5px;
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			margin: 20px;
+			padding: 10px;
+		}
+		nav a {
+			color: #333;
+			margin: 10px;
+			padding: 10px;
+			text-decoration: none;
+		}
+		nav a:hover {
+			background-color: #ccc;
+			color: #fff;
+		}
+	</style>
+</head>
+<body>
+	<header>
+		<h1>Zachcoin explorer</h1>
+	</header>
+	<nav>
+		<a href="/">Home</a>
+		<a href="/blocks">View Blocks</a>
+		<a href="/accounts">View Accounts</a>
+	</nav>
+	<h1>ZachCoin blocks</h1>
+  <table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nonce</th>
+            <th>Proof of Work</th>
+            <th>Previous Block ID</th>
+            <th>Block ID</th>
+            <th>Input ID</th>
+            <th>Input n</th>
+            <th>Outputs</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for block in blocks %}
+            <tr>
+                <td class="truncate">{{ block['id'] }}</td>
+                <td class="truncate">{{ block['nonce'] }}</td>
+                <td class="truncate">{{ block['pow'] }}</td>
+                <td class="truncate">{{ block['prev'] }}</td>
+                <td class="truncate">{{ block['id'] }}</td>
+                <td class="truncate">{{ block['tx']['input']['id'] }}</td>
+                <td class="truncate">{{ block['tx']['input']['n'] }}</td>
+                <td>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Value</th>
+                                <th>Public Key</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for output in block['tx']['output'] %}
+                                <tr>
+                                    <td>{{ output['value'] }}</td>
+                                    <td class="truncate">{{ output['pub_key'] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+  </table>  
+</body>
+</html>
+
