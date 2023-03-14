@@ -3,17 +3,104 @@
 <head>
 	<title>Zachcoin Public Key Viewer</title>
 	<style>
-		body {
-			background-color: #000000;
-			color: #FFFFFF;
-			font-family: 'Courier New', Courier, monospace;
+		html, body{
+			-webkit-font-smoothing:antialiased;
+			font-family: "Comic Sans MS", sans-serif;
+			line-height:1.4;
+			margin:0 auto;
+			max-width:860px;
+			height: 100%;
+		}
+		.center{
+			text-align: center;
+		}
+		.intro{
+			font-size:4em;
+		}
+		.max { 
+				display: block;
+				width: 860px;
+				word-wrap: break-word;
 		}
 
-		h1 {
-			font-size: 36px;
-			text-align: center;
-			color: #1ddf4d;
-			text-shadow: 0 0 5px #c7e21a;
+		.bg1{
+			background-image: url("https://i.imgur.com/YUPql5N.gif");
+		}
+		.bg2{
+			background-image: url("https://i.imgur.com/SHZe50s.gif");
+		}
+
+		a{
+			color: #000000;
+		}
+		#wm-ipp #wm-ipp-inside {
+			margin: 0 6px;
+			border:5px solid #000;
+			border-top:none;
+			background-color:rgba(255,255,255,0.9);
+			-moz-box-shadow:1px 1px 4px #333;
+			-webkit-box-shadow:1px 1px 4px #333;
+			box-shadow:1px 1px 4px #333;
+			border-radius:0 0 8px 8px;
+		}
+		.container {
+				width: 1000px;
+				height: 100%;
+				border: 2px solid black;
+				box-sizing: border-box;
+		}
+		h1, h2, h3, p, a {
+			color: yellow;
+		}
+		span.line{
+			color: red;
+		}
+		.cursor{
+				cursor: url(https://i.imgur.com/RUE567I.gif), auto;
+		}
+
+		.blink {
+			-webkit-animation: blink .75s linear infinite;
+			-moz-animation: blink .75s linear infinite;
+			-ms-animation: blink .75s linear infinite;
+			-o-animation: blink .75s linear infinite;
+			animation: blink .75s linear infinite;
+		}
+		@-webkit-keyframes blink {
+			0% { opacity: 1; }
+			50% { opacity: 1; }
+			50.01% { opacity: 0; }
+			100% { opacity: 0; }
+		}
+		@-moz-keyframes blink {
+			0% { opacity: 1; }
+			50% { opacity: 1; }
+			50.01% { opacity: 0; }
+			100% { opacity: 0; }
+		}
+		@-ms-keyframes blink {
+			0% { opacity: 1; }
+			50% { opacity: 1; }
+			50.01% { opacity: 0; }
+			100% { opacity: 0; }
+		}
+		@-o-keyframes blink {
+			0% { opacity: 1; }
+			50% { opacity: 1; }
+			50.01% { opacity: 0; }
+			100% { opacity: 0; }
+		}
+		@keyframes blink {
+			0% { opacity: 1; }
+			50% { opacity: 1; }
+			50.01% { opacity: 0; }
+			100% { opacity: 0; }
+		}
+		/* @end */
+
+		/*for footer*/
+		#main{
+			min-height: 90vh;
 		}
 
 		table {
@@ -62,7 +149,7 @@
 			border-bottom: none;
 		}
 
-		a {
+		/* a {
 			color: #FFFFFF;
 			text-decoration: none;
 			font-size: 18px;
@@ -71,7 +158,7 @@
 
 		a:hover {
 			color: #FF0000;
-		}
+		} */
 
 		table {
 			border-collapse: collapse;
@@ -79,74 +166,51 @@
 		}
 
 		th, td {
-			text-align: left;
+			text-align: center;
 			padding: 8px;
 		}
 
-		tr:nth-child(even) {
-			background-color: #f2f2f2;
-		}
+		tr:nth-child(even){background-color: #d06c00}
+		tr:nth-child(odd){background-color: #00b518}
 
 		th {
-			background-color: #4CAF50;
+			background-color: #59009d;
 			color: white;
 		}
 
+		/* @media only screen and (max-width: 768px) {
+			table {
+				font-size: 12px;
+			}
+
+			th, td {
+				padding: 6px;
+			}
+		} */
+
 		.truncate {
-			max-width: 12ch;
+			max-width: 100px;
+			white-space: nowrap;
 			overflow: hidden;
 			text-overflow: ellipsis;
-			white-space: nowrap;
 		}
 
-		@media (prefers-color-scheme: dark) {
-			body {
-				background-color: #1c1c1c;
-				color: white;
-			}
-
-			tr:nth-child(even){background-color: #2b2b2b}
-
-			th {
-				background-color: #4CAF50;
-				color: white;
-			}
-
-			.truncate:hover {
-				background-color: #2b2b2b;
-				border: 1px solid white;
-			}
-		}
-
-		header {
-			background-color: #333;
-			color: #fff;
-			padding: 10px;
-			text-align: center;
-		}
-		nav {
-			background-color: #f2f2f2;
-			border: 1px solid #ccc;
-			border-radius: 5px;
-			display: flex;
-			flex-wrap: wrap;
-			justify-content: center;
-			margin: 20px;
-			padding: 10px;
-		}
-		nav a {
-			color: #333;
-			margin: 10px;
-			padding: 10px;
-			text-decoration: none;
-		}
-		nav a:hover {
-			background-color: #ccc;
-			color: #fff;
+		.truncate:hover {
+			max-width: none;
+			overflow: visible;
+			z-index: 1000;
+			position: absolute;
+			background-color: #0031c4;
+			border: 1px solid white;
+			padding: 5px;
+			font-size: 14px;
+			font-weight: normal;
+			text-align: left;
+			box-shadow: 5px 5px 5px rgba(0,0,0,0.5);
 		}
 	</style>
 </head>
-<body>
+<body class="center bg2 max">
 	<header>
 		<h1>Zachcoin explorer</h1>
 	</header>
