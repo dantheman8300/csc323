@@ -227,6 +227,48 @@ class ZachCoinClient (Node):
         
         return True
 
+def getBlocks(username, port):
+    #Create a client object
+    client = ZachCoinClient("127.0.0.1", port, username)
+    client.debug = False
+
+    time.sleep(1)
+
+    client.start()
+
+    time.sleep(1)
+
+    #Connect to server 
+    client.connect_with_node(SERVER_ADDR, SERVER_PORT)
+    # print("Starting ZachCoin™ Client:", sys.argv[1])
+    time.sleep(2)
+
+    blocks = client.blockchain
+
+    client.stop()
+
+    print("Blocks:", blocks)
+
+    return blocks
+
+def startClient(username, port):
+    print("Creating client", username, "on port", port, "...")
+    #Create a client object
+    client = ZachCoinClient("127.0.0.1", port, username)
+    client.debug = False
+
+    time.sleep(1)
+
+    client.start()
+
+    time.sleep(1)
+
+    #Connect to server 
+    client.connect_with_node(SERVER_ADDR, SERVER_PORT)
+    print("Starting ZachCoin™ Client:", username)
+    time.sleep(2)
+
+    return client
 
 def main():
 

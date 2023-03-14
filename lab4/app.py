@@ -1,6 +1,9 @@
+import os
 from flask import Flask, render_template
-
+from zc_client import getBlocks, startClient
 app = Flask(__name__)
+
+zcClient = None
 
 # Example array of blockchain blocks
 blocks = [
@@ -161,6 +164,35 @@ blocks = [
     }
    ]
   }
+ },
+ {
+  "type": 0,
+  "id": "12ed133605683812c79c63a5bd48e75d7e33905d0683301488d1c6c72367d1f1",
+  "nonce": "10de2db8e331823ba5b6037bc45eae3a",
+  "pow": "00000028b6010689675acf435034d390139f0f1a05ec31bf8aea213110e71ccf",
+  "prev": "95b36089dbff5b59ce608bcc93c381e63a8d491e8e10ef1df310d5c31b18f301",
+  "tx": {
+   "type": 1,
+   "input": {
+    "id": "95b36089dbff5b59ce608bcc93c381e63a8d491e8e10ef1df310d5c31b18f301",
+    "n": 1
+   },
+   "sig": "c2628edf9ec8ef833088b7b1992500b5eebc72c123f8056ea329303ff09b44dc0437ab010324a0dd9d197e1909098e6f",
+   "output": [
+    {
+     "value": 25,
+     "pub_key": "3eb208815e53dcff97224710c98b30fc87f10f8b7bbd6dbb288156b440a7694133420eb782135094054c0d031b07e861"
+    },
+    {
+     "value": 25,
+     "pub_key": "c26cfef538dd15b6f52593262403de16fa2dc7acb21284d71bf0a28f5792581b4a6be89d2a7ec1d4f7849832fe7b4daa"
+    },
+    {
+     "value": 50,
+     "pub_key": "c26cfef538dd15b6f52593262403de16fa2dc7acb21284d71bf0a28f5792581b4a6be89d2a7ec1d4f7849832fe7b4daa"
+    }
+   ]
+  }
  }
 ]
 
@@ -170,10 +202,22 @@ def index():
 
 @app.route('/blocks')
 def view_blocks():
+    # blocks = getBlocks("viewer", 42078)
+    global zcClient
+    while (zcClient == None):
+        print("client is none")
+        zcClient = startClient("viewer", 42078)
+    blocks = zcClient.blockchain
     return render_template('blocks.html', blocks=blocks)
 
 @app.route('/accounts')
 def public_keys():
+    # blocks = getBlocks("viewer", 42078)
+    global zcClient
+    while (zcClient == None):
+        print("client is none")
+        zcClient = startClient("viewer", 42078)
+    blocks = zcClient.blockchain
     # Create a dictionary to store the balances for each public key
     balances = {}
 
