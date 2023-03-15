@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Block Viewer</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<style>
+		html, body{
+			-webkit-font-smoothing:antialiased;
+			font-family: "Comic Sans MS", sans-serif;
+			line-height:1.4;
+			margin:0 auto;
+			max-width:860px;
+			height: 100%;
+		}
+		.center{
+			text-align: center;
+		}
+		.intro{
+			font-size:4em;
+		}
+		.max { 
+				display: block;
+				width: 860px;
+				word-wrap: break-word;
+		}
+
+		.bg1{
+			background-image: url("https://i.imgur.com/YUPql5N.gif");
+		}
+		.bg2{
+			background-image: url("https://i.imgur.com/SHZe50s.gif");
+		}
+
+		a{
+			color: #000000;
+		}
+		#wm-ipp #wm-ipp-inside {
+			margin: 0 6px;
+			border:5px solid #000;
+			border-top:none;
+			background-color:rgba(255,255,255,0.9);
+			-moz-box-shadow:1px 1px 4px #333;
+			-webkit-box-shadow:1px 1px 4px #333;
+			box-shadow:1px 1px 4px #333;
+			border-radius:0 0 8px 8px;
+		}
+		.container {
+				width: 1000px;
+				height: 100%;
+				border: 2px solid black;
+				box-sizing: border-box;
+		}
+		h1, h2, h3, p, a {
+			color: yellow;
+		}
+		span.line{
+			color: red;
+		}
+		.cursor{
+				cursor: url(https://i.imgur.com/RUE567I.gif), auto;
+		}
+
+		.blink {
+			-webkit-animation: blink .75s linear infinite;
+			-moz-animation: blink .75s linear infinite;
+			-ms-animation: blink .75s linear infinite;
+			-o-animation: blink .75s linear infinite;
+			animation: blink .75s linear infinite;
+		}
+		@-webkit-keyframes blink {
+			0% { opacity: 1; }
+			50% { opacity: 1; }
+			50.01% { opacity: 0; }
+			100% { opacity: 0; }
+		}
+		@-moz-keyframes blink {
+			0% { opacity: 1; }
+			50% { opacity: 1; }
+			50.01% { opacity: 0; }
+			100% { opacity: 0; }
+		}
+		@-ms-keyframes blink {
+			0% { opacity: 1; }
+			50% { opacity: 1; }
+			50.01% { opacity: 0; }
+			100% { opacity: 0; }
+		}
+		@-o-keyframes blink {
+			0% { opacity: 1; }
+			50% { opacity: 1; }
+			50.01% { opacity: 0; }
+			100% { opacity: 0; }
+		}
+		@keyframes blink {
+			0% { opacity: 1; }
+			50% { opacity: 1; }
+			50.01% { opacity: 0; }
+			100% { opacity: 0; }
+		}
+		/* @end */
+
+		/*for footer*/
+		#main{
+			min-height: 90vh;
+		}
+
+		table {
+			border-collapse: collapse;
+			width: 100%;
+			margin: 20px 0;
+		}
+
+		th {
+			background-color: #FF0000;
+			color: #000000;
+			font-size: 20px;
+			padding: 10px;
+		}
+
+		td {
+			padding: 10px;
+			text-align: center;
+			font-size: 16px;
+			border-bottom: 1px solid #FFFFFF;
+		}
+
+		.truncate {
+			max-width: 100px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.subtable {
+			font-size: 12px;
+			margin-left: 20px;
+		}
+
+		.subtable th {
+			background-color: #FFFFFF;
+			color: #000000;
+			font-size: 14px;
+			padding: 5px;
+		}
+
+		.subtable td {
+			padding: 5px;
+			text-align: center;
+			font-size: 12px;
+			border-bottom: none;
+		}
+
+		/* a {
+			color: #FFFFFF;
+			text-decoration: none;
+			font-size: 18px;
+			margin: 10px;
+		}
+		a:hover {
+			color: #FF0000;
+		} */
+
+		table {
+			border-collapse: collapse;
+			width: 100%;
+		}
+
+		th, td {
+			text-align: center;
+			padding: 8px;
+		}
+
+		tr:nth-child(even){background-color: #d06c00}
+		tr:nth-child(odd){background-color: #00b518}
+
+		th {
+			background-color: #59009d;
+			color: white;
+		}
+
+		/* @media only screen and (max-width: 768px) {
+			table {
+				font-size: 12px;
+			}
+			th, td {
+				padding: 6px;
+			}
+		} */
+
+		.truncate {
+			max-width: 100px;
+			white-space: nowrap;
+			overflow: hidden;
+			text-overflow: ellipsis;
+		}
+
+		.truncate:hover {
+			max-width: none;
+			overflow: visible;
+			z-index: 1000;
+			position: absolute;
+			background-color: #0031c4;
+			border: 1px solid white;
+			padding: 5px;
+			font-size: 14px;
+			font-weight: normal;
+			text-align: left;
+			box-shadow: 5px 5px 5px rgba(0,0,0,0.5);
+		}
+
+		/* @media (prefers-color-scheme: light) {
+			body {
+				background-color: white;
+				color: black;
+			}
+			tr:nth-child(even){background-color: #f2f2f2}
+			th {
+				background-color: #4CAF50;
+				color: white;
+			}
+			.truncate:hover {
+				background-color: white;
+				border: 1px solid black;
+			}
+		}
+		@media (prefers-color-scheme: dark) {
+			body {
+				background-color: #1c1c1c;
+				color: white;
+			}
+			tr:nth-child(even){background-color: #2b2b2b}
+			th {
+				background-color: #4CAF50;
+				color: white;
+			}
+			.truncate:hover {
+				background-color: #2b2b2b;
+				border: 1px solid white;
+			}
+		}
+		header {
+			background-color: #333;
+			color: #fff;
+			padding: 10px;
+			text-align: center;
+		}
+		nav {
+			background-color: #f2f2f2;
+			border: 1px solid #ccc;
+			border-radius: 5px;
+			display: flex;
+			flex-wrap: wrap;
+			justify-content: center;
+			margin: 20px;
+			padding: 10px;
+		}
+		nav a {
+			color: #333;
+			margin: 10px;
+			padding: 10px;
+			text-decoration: none;
+		}
+		nav a:hover {
+			background-color: #ccc;
+			color: #fff;
+		} */
+	</style>
+</head>
+<body class="center bg2 max">
+		<h1 class="tab blink">Zachcoin explorer</h1>
+		<div id="home">
+			<a href="/">Home</a>
+			<span class="line">|</span>
+			<a href="/blocks">View Blocks</a>
+			<span class="line">|</span>
+			<a href="/accounts">View Accounts</a>
+		</div>
+	<h1>ZachCoin blocks</h1>
+  <table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nonce</th>
+            <th>Proof of Work</th>
+            <th>Previous Block ID</th>
+            <th>Block ID</th>
+            <th>Input ID</th>
+            <th>Input n</th>
+            <th>Outputs</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for block in blocks %}
+            <tr>
+                <td class="truncate">{{ block['id'] }}</td>
+                <td class="truncate">{{ block['nonce'] }}</td>
+                <td class="truncate">{{ block['pow'] }}</td>
+                <td class="truncate">{{ block['prev'] }}</td>
+                <td class="truncate">{{ block['id'] }}</td>
+                <td class="truncate">{{ block['tx']['input']['id'] }}</td>
+                <td class="truncate">{{ block['tx']['input']['n'] }}</td>
+                <td>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Value</th>
+                                <th>Public Key</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for output in block['tx']['output'] %}
+                                <tr>
+                                    <td>{{ output['value'] }}</td>
+                                    <td class="truncate">{{ output['pub_key'] }}</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+  </table>  
+</body>
+</html>
