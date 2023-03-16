@@ -168,18 +168,22 @@ class ZachCoinClient (Node):
 
         # 2. The type field is the value 0
         if block["type"] != 0:
+            print("invalid type")
             return False
 
         # 3. the block id has been computed correctly
         if block["id"] != validate_block_id(block):
+            print("invalid block id")
             return False
 
         # 4. The prev field stored the block id of the preceding block on the blockchain
         if block["prev"] != self.blockchain[-1]["id"]:
+            print("invalid prev block id")
             return False
 
         # 5. the proof of work validates and is less than the difficulty value
         if not self.validate_pow(block["pow"]):
+            print("invalid pow")
             return False
 
         # 6. the transaction within the block is valid, including: 
@@ -195,6 +199,7 @@ class ZachCoinClient (Node):
 
         #    b. the transaction type is the value 1
         if block["tx"]["type"] != 1:
+            print("invalid tx type")
             return False
 
         #    c. The transaction input refers to a valid unspent transaction output
