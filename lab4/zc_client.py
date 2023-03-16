@@ -1,9 +1,9 @@
 import hashlib
-from random import Random
 import sys, time, json, os
 from ecdsa import VerifyingKey, SigningKey
 from p2pnetwork.node import Node
 from Crypto.Cipher import AES
+from Crypto import Random
 
 DIFFICULTY = 0x000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 
@@ -11,28 +11,33 @@ DIFFICULTY = 0x000000FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 #===============================================================================
 
 #===============================================================================
-def generate_tx(client, sk, vk, input_block: dict, ):
+def generate_tx(client, sk, vk, to, block, amt, original_amt, n):
     utx = {} # Create UTX
 
     utx["type"] = client.TRANSACTION # Set type to TRANSACTION
 
     utx["input"] = {} # Create input
-    utx["input"]["id"] = 0 # Set input id to blockId of input block
-    utx["input"]["n"] = 0 
+    utx["input"]["id"] = block["id"] # Set input id to blockId of input block
+    utx["input"]["n"] = n # output #
 
-    # utx.sig = 
+    utx["sig"] = 0
 
     utx["output"] = [] # Create output
     utx["output"].append({}) # Create output[0]
-    utx["output"][0]["value"] = 50 # Set output[0].value to 50
-    utx["output"][0]["pub_key"] = vk.to_string().hex() # Set output[0].pub_key to vk
+    utx["output"][0]["value"] = amt # Set output[0].value to 50
+    utx["output"][0]["pub_key"] = to#.to_string().hex() # Set output[0].pub_key to vk
 
     utx["output"].append({}) # Create output[1]
-    utx["output"][1]["value"] = 50 # Set output[1].value to 50
+    utx["output"][1]["value"] = original_amt - amt # Set output[1].value to 50
     utx["output"][1]["pub_key"] = vk.to_string().hex() # Set output[1].pub_key to vk
+
+    return utx
 
 def validate_block_id(block: dict):
     expected_id = hashlib.sha256(json.dumps(block['tx'], sort_keys=True).encode('utf8')).hexdigest()
+    print("expected_id: " + expected_id)
+    print("block['id']: " + block['id'])
+    print("expected_id == block['id']: " + str(expected_id == block['id']))
     return expected_id == block['id']
 
 def compute_block_id(tx: dict):
@@ -55,7 +60,7 @@ def generate_signature(sk, utx):
 
 def validate_signature(tx, pub_key):
     vk = VerifyingKey.from_string(bytes.fromhex(pub_key))
-    assert vk.verify(bytes.fromhex(tx['sig']), json.dumps(tx['input'], sort_keys=True).encode('utf8'))
+    return vk.verify(bytes.fromhex(tx['sig']), json.dumps(tx['input'], sort_keys=True).encode('utf8'))
 
 
 
@@ -128,13 +133,31 @@ class ZachCoinClient (Node):
                     self.blockchain = data['blockchain']
                 elif data['type'] == self.UTXPOOL:
                     self.utx = data['utxpool']
-                #TODO: Validate blocks
+                elif data['type'] == self.BLOCK:
+                    if self.validate_block(data):
+                        print("valid block received")
+                        self.blockchain.append(data)
+                    else: 
+                        print("invalid block received")
+                        print("block: " + json.dumps(data,indent=2))
+
 
     def node_disconnect_with_outbound_node(self, connected_node):
         print("node wants to disconnect with oher outbound node: " + connected_node.id)
         
     def node_request_to_stop(self):
         print("node is requested to stop!")
+
+    def validate_pow(self, block: dict):
+        return int( hashlib.sha256(json.dumps(block['tx'], sort_keys=True).encode('utf8') + block['nonce'].encode('utf-8')).hexdigest(), 16) < self.DIFFICULTY
+
+
+    def mine_transaction(self, utx):
+        nonce = Random.new().read(AES.block_size).hex()
+        while( int( hashlib.sha256(json.dumps(utx, sort_keys=True).encode('utf8') + nonce.encode('utf-8')).hexdigest(), 16) > self.DIFFICULTY):
+            nonce = Random.new().read(AES.block_size).hex()
+            pow = hashlib.sha256(json.dumps(utx, sort_keys=True).encode('utf8') + nonce.encode('utf-8')).hexdigest()
+        return pow, nonce
 
     # Validate a block based on the following rules:
     # 1. the block contains all required fields
@@ -168,55 +191,88 @@ class ZachCoinClient (Node):
         # 2. The type field is the value 0
         if block["type"] != 0:
             return False
+        
+        print("1")
 
         # 3. the block id has been computed correctly
-        if block["id"] != validate_block_id(block):
+        if not validate_block_id(block):
             return False
+        
+        print("2")
 
         # 4. The prev field stored the block id of the preceding block on the blockchain
         if block["prev"] != self.blockchain[-1]["id"]:
+            print("issue: not pointing to previous block")
             return False
+        
+        print("3")
 
         # 5. the proof of work validates and is less than the difficulty value
-        if not validate_pow(block["pow"]):
+        if not self.validate_pow(block):
+            print("issue: pow not valid")
             return False
+        
+        print("4")
 
         # 6. the transaction within the block is valid, including: 
         #    a. the trasaction contains all required fields
         if not "type" in block["tx"]:
+            print("issue: no type in tx")
             return False
         if not "input" in block["tx"]:
+            print("issue: no input in tx")
             return False
         if not "sig" in block["tx"]:
+            print("issue: no sig in tx")
             return False
         if not "output" in block["tx"]:
+            print("issue: no output in tx")
             return False
+        
+        print("5")
 
         #    b. the transaction type is the value 1
         if block["tx"]["type"] != 1:
+            print("issue: tx type not 1")
             return False
+        
+        print("6")
 
         #    c. The transaction input refers to a valid unspent transaction output
         if not "id" in block["tx"]["input"]:
+            print("issue: no id in tx input")
             return False
         if not "n" in block["tx"]["input"]:
+            print("issue: no n in tx input")
             return False
+        
+        print("7")
 
         #    d. The transaction input has not been spent
         for b in self.blockchain:
             if b["tx"]["input"]["id"] == block["tx"]["input"]["id"] and b["tx"]["input"]["n"] == block["tx"]["input"]["n"]:
+                print("issue: input already spent")
                 return False
+            
+        print("8")
 
         #    e. the value of the input equals the sum of the outputs (arbitrary amount of outputs)
         sum = 0
         for output in block["tx"]["output"]:
             sum += output["value"]
-        if sum != block["tx"]["input"]["value"]:
-            return False
+        for b in self.blockchain:
+            if b["tx"]["input"]["id"] == block["tx"]["input"]["id"] and b["tx"]["input"]["n"] == block["tx"]["input"]["n"]:
+                if sum != b["tx"]["output"][block["tx"]["input"]["n"]]["value"]:
+                    print("issue: sum of outputs not equal to input")
+                    return False
+                
+        print("9")
         
         #    f. the coinbase output is valid
         if block["tx"]["output"][-1]["value"] != 50:
             return False
+        
+        print("10")
         
         #    g. the signature of the transaction is valid
         #find input block in blockchain list
@@ -224,6 +280,8 @@ class ZachCoinClient (Node):
             if b["id"] == block["tx"]["input"]["id"]:
                 if not validate_signature(block["tx"], b["tx"]["output"][block["tx"]["input"]["n"]]["pub_key"]):
                     return False
+                
+        print("11")
         
         return True
 
@@ -328,30 +386,32 @@ def main():
         elif x == 2:
             print(json.dumps(client.utx, indent=1))
         elif x == 3: 
-            print("Creating a transaction...")
+            # print("Creating a transaction...")
 
-            print("Collecting blocks containing output to vk: \"{}\"".format(vk.to_string().hex()))
-            blocks = []
-            for block in client.blockchain:
-                # print("Checking block {}...".format(block["id"]))
-                tx = block["tx"]
-                for output in tx["output"]:
-                    if output["pub_key"] == vk.to_string().hex():
-                        blocks.append(block)
-            if len(blocks) == 0:
-                print("Error: No blocks found containing output to vk")
-                input()
-                continue
-            print("Found {} blocks containing output to vk".format(len(blocks)))
-            print("Selecting block with highest value...")
-
+            # print("Collecting blocks containing output to vk: \"{}\"".format(vk.to_string().hex()))
+            # blocks = []
+            # for block in client.blockchain:
+            #     # print("Checking block {}...".format(block["id"]))
+            #     tx = block["tx"]
+            #     for output in tx["output"]:
+            #         if output["pub_key"] == vk.to_string().hex():
+            #             blocks.append(block)
+            # if len(blocks) == 0:
+            #     print("Error: No blocks found containing output to vk")
+            #     input()
+            #     continue
+            # print("Found {} blocks containing output to vk".format(len(blocks)))
+            # print("Select a block to spend from:")
+            # # display all valid outputs from all blocks and also create 
+            # # a list of all valid outputs
+            
             # utx = {} # Create UTX
 
             # utx["type"] = client.TRANSACTION # Set type to TRANSACTION
 
             # utx["input"] = {} # Create input
-            # utx["input"]["id"] = 0 # Set input id to blockId of input block
-            # utx["input"]["n"] = 0 
+            # utx["input"]["id"] = chosen_block[0]["id"] # Set input.id to chosen_block.id
+            # utx["input"]["n"] = chosen_block[1]["n"] # Set input.n to chosen_block.output.n
 
             # # utx.sig = 
 
@@ -368,6 +428,94 @@ def main():
 
             # # client.connect_with_node(SERVER_ADDR, SERVER_PORT) # Connect to server
             # # client.send_to_nodes(utx) # Send utx to nodes
+
+            print("\nCreating a transaction ...")
+            print("Collecting blocks containing output to vk: \"{}\"".format(vk.to_string().hex()))
+
+            blocks = []
+            pks = []
+            n = 0
+            for block in client.blockchain:
+                tx = block["tx"]
+                n_temp = 0
+                for output in tx["output"]:
+                    pk = output["pub_key"]
+                    if(pk not in pks):
+                        pks.append(pk)
+                    if pk == vk.to_string().hex():
+                        blocks.append(block)
+                        n = n_temp
+                    n_temp +=1
+                    
+            if len(blocks) == 0:
+                print("Error: No blocks found containing output to vk")
+                input()
+                continue
+            print("Found {} blocks containing output to vk\n".format(len(blocks)))
+            blk = blocks[len(blocks)-1]
+
+            print("Who would you like to send ZachCoin to:\n")
+            # print out all possible options
+            for p in range(len(pks)):
+                print("\t" + "{}".format(p) + ": " + pks[p])
+            to_num = input("\nEnter your choice -> ")
+            print()
+            try:
+                to_num = int(to_num)
+            except:
+                print("Error: Invalid option.")
+                input()
+                continue
+            if(to_num < 0 or to_num >= len(pks)):
+                print("Error: Invalid option.")
+                input()
+                continue
+            to = pks[to_num]
+            try:
+                avail = blk["tx"]["output"][n]["value"]
+                print("You have {} ZachCoins available in this block.".format(avail))
+            except:
+                print("Error: Invalid option.")
+                input()
+                continue
+            amt = input("How much would you like to send: ")
+            try:
+                amt = int(amt)
+            except:
+                print("Error: Invalid amount.")
+                input()
+                continue
+            
+            # if(amt > avail):
+            #     print("Error: Invalid amount.")
+            #     input()
+            #     continue
+
+            # client, my sk, my vk, to vk, blk that has how much of my stuff in it, amt to send to other person, amt I have, og output #
+            utx = generate_tx(client, sk, vk, to, blk, amt, avail, n)
+            
+            try:
+                utx["sig"] = generate_signature(sk, utx) # sign it
+            except:
+                print("Error: Invalid signature.")
+                input()
+                continue
+            print(json.dumps(utx, indent=1))
+            try:
+                validate_signature(utx, vk.to_string().hex())
+            except:
+                
+                print("Error: Invalid signature.")
+                input()
+                continue
+            print("sending UTX to server ...")
+            try:
+                # client.connect_with_node(SERVER_ADDR, SERVER_PORT) # Connect to server
+                client.send_to_nodes(utx) # Send utx to nodes
+            except:
+                print("Error: Failed to connect.")
+                input()
+                continue
 
         elif x == 4: 
             print("Mining a block...")
@@ -387,7 +535,7 @@ def main():
                 if not "output" in client.utx[i]:
                     print("Error: Invalid block type.")
                     continue
-                print("\t{}: {}".format(i, client.utx[i]["id"]))
+                print("\t{}: {}".format(i, client.utx[i]))
             if (len(client.utx) == 0):
                 print("Error: No transactions to mine.")
                 input()
@@ -404,14 +552,14 @@ def main():
                 input()
                 continue
             utx = client.utx[x]
-            print("Mining transaction: {}".format(utx["id"]))
+            print("Mining transaction: {}".format(utx))
 
             # Create block
             block = {}
 
             block["type"] = client.BLOCK # Set type to BLOCK
             
-            block["id"] = compute_block_id(utx) # Set id to hash of utx
+            # block["id"] = compute_block_id(utx) # Set id to hash of utx
 
             block["prev"] = client.blockchain[-1]["id"] # Set prev to hash of last block in blockchain
 
@@ -423,11 +571,13 @@ def main():
             coinbase["pub_key"] = vk.to_string().hex()
             block["tx"]["output"].append(coinbase)
 
+            block["id"] = compute_block_id(block["tx"]) # Set id to hash of utx
+
             # sign block
-            block["sig"] = generate_signature(vk, block["tx"])
+            block["sig"] = generate_signature(sk, block["tx"])
 
             # calculate block proof of work
-            (block["pow"], block["nonce"]) = mine_transaction(block["tx"])
+            (block["pow"], block["nonce"]) = client.mine_transaction(block["tx"])
 
             print("Block generated: {}".format(block["id"]))
             print("block: ", block)
@@ -438,6 +588,18 @@ def main():
                 client.send_to_nodes(block)
             else:
                 print("Block discarded.")
+
+        elif x == 5:
+            print("Verifying blockchain...")
+            for block in client.blockchain:
+                if block["tx"]["input"]["id"] == '0000000000000000000000000000000000000000000000000000000000000000': 
+                    continue
+                print("Verifying block {}...".format(block["id"]))
+                if not client.validate_block(block):
+                    print("Error: Invalid block.")
+                    print("Block: ", block)
+                    input()
+                    continue
         else:
             print("Error: Invalid menu option.")
 

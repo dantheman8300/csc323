@@ -216,7 +216,9 @@
 	</header>
 	<nav>
 		<a href="/">Home</a>
+		<span class="line">|</span>
 		<a href="/blocks">View Blocks</a>
+		<span class="line">|</span>
 		<a href="/accounts">View Accounts</a>
 	</nav>
 	<h1>Public Key Viewer</h1>
@@ -228,10 +230,10 @@
 			</tr>
 		</thead>
 		<tbody>
-			{% for key, value in public_keys.items() %}
+			{% for pub_key, balance in public_keys.items() | sort()%}
 				<tr>
-					<td class="truncate">{{ key }}</td>
-					<td>{{ value }}</td>
+					<td class="truncate">{{ pub_key }}</td>
+					<td>{{ balance }}</td>
 				</tr>
 			{% endfor %}
 		</tbody>

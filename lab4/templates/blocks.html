@@ -60,6 +60,10 @@
 				cursor: url(https://i.imgur.com/RUE567I.gif), auto;
 		}
 
+		button {
+			background-color: #59009d;
+		}
+
 		.blink {
 			-webkit-animation: blink .75s linear infinite;
 			-moz-animation: blink .75s linear infinite;
@@ -150,17 +154,6 @@
 			border-bottom: none;
 		}
 
-		/* a {
-			color: #FFFFFF;
-			text-decoration: none;
-			font-size: 18px;
-			margin: 10px;
-		}
-
-		a:hover {
-			color: #FF0000;
-		} */
-
 		table {
 			border-collapse: collapse;
 			width: 100%;
@@ -178,16 +171,6 @@
 			background-color: #59009d;
 			color: white;
 		}
-
-		/* @media only screen and (max-width: 768px) {
-			table {
-				font-size: 12px;
-			}
-
-			th, td {
-				padding: 6px;
-			}
-		} */
 
 		.truncate {
 			max-width: 100px;
@@ -210,70 +193,20 @@
 			box-shadow: 5px 5px 5px rgba(0,0,0,0.5);
 		}
 
-		/* @media (prefers-color-scheme: light) {
-			body {
-				background-color: white;
-				color: black;
-			}
-
-			tr:nth-child(even){background-color: #f2f2f2}
-
-			th {
-				background-color: #4CAF50;
-				color: white;
-			}
-
-			.truncate:hover {
-				background-color: white;
-				border: 1px solid black;
-			}
-		}
-
-		@media (prefers-color-scheme: dark) {
-			body {
-				background-color: #1c1c1c;
-				color: white;
-			}
-
-			tr:nth-child(even){background-color: #2b2b2b}
-
-			th {
-				background-color: #4CAF50;
-				color: white;
-			}
-
-			.truncate:hover {
-				background-color: #2b2b2b;
-				border: 1px solid white;
-			}
-		}
-		header {
-			background-color: #333;
-			color: #fff;
-			padding: 10px;
-			text-align: center;
-		}
-		nav {
-			background-color: #f2f2f2;
-			border: 1px solid #ccc;
-			border-radius: 5px;
-			display: flex;
-			flex-wrap: wrap;
-			justify-content: center;
-			margin: 20px;
-			padding: 10px;
-		}
-		nav a {
-			color: #333;
-			margin: 10px;
-			padding: 10px;
-			text-decoration: none;
-		}
-		nav a:hover {
-			background-color: #ccc;
-			color: #fff;
-		} */
+		
 	</style>
+	<script>
+		// $(function() {
+		// 	$('a#test').on('click', function(e) {
+		// 		e.preventDefault()
+		// 		$.getJSON('/blocks',
+		// 			function(data) {
+		// 			//do nothing
+		// 		});
+		// 		return false;
+		// 	});
+		// });
+	</script>
 </head>
 <body class="center bg2 max">
 		<h1 class="tab blink">Zachcoin explorer</h1>
@@ -284,7 +217,8 @@
 			<span class="line">|</span>
 			<a href="/accounts">View Accounts</a>
 		</div>
-	<h1>ZachCoin blocks</h1>
+	<h1>ZachCoin blocks {{blocknumber}}</h1>
+	<button ><a href="/blocks">Refresh</a></button>
   <table>
     <thead>
         <tr>
