@@ -483,7 +483,7 @@ def main():
             # block["sig"] = generate_signature(vk, block["tx"])
 
             # calculate block proof of work
-            print(block)
+            print(json.dumps(block, indent=1))
             (block["pow"], block["nonce"]) = client.mine_transaction(block["tx"])
             try:
                 client.validate_pow(block)
@@ -495,12 +495,17 @@ def main():
             print("Block generated: {}".format(block["id"]))
             print("block: ", block)
 
-            # get user confirmation to send block to server
-            x = input("Send block to server? (y/n) -> ")
-            if x == "y":
-                client.send_to_nodes(block)
+            if(client.validate_block(block) == False):
+                print("Invalid Block")
+                input()
             else:
-                print("Block discarded.")
+
+                # get user confirmation to send block to server
+                x = input("Send block to server? (y/n) -> ")
+                if x == "y":
+                    client.send_to_nodes(block)
+                else:
+                    print("Block discarded.")
 
         # TODO: Add options for creating and mining transactions
         # as well as any other additional features
