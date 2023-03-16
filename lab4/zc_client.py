@@ -390,10 +390,10 @@ def main():
                 input()
                 continue
             
-            if(amt > avail):
-                print("Error: Invalid amount.")
-                input()
-                continue
+            # if(amt > avail):
+            #     print("Error: Invalid amount.")
+            #     input()
+            #     continue
 
             # client, my sk, my vk, to vk, blk that has how much of my stuff in it, amt to send to other person, amt I have, og output #
             utx = generate_tx(client, sk, vk, to, blk, amt, avail, n)
